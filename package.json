@@ -1,0 +1,12 @@
+{
+  "name": "froede",
+  "version": "0.0.1",
+  "private": true,
+  "description": "front + edit + code - point-and-click editing that writes back to your real source code.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Mun1to/froede.git"
+  },
+  "packageManager": "pnpm@11.5.1"
+}
