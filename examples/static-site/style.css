@@ -1,0 +1,27 @@
+body {
+  margin: 0;
+  font: 16px/1.6 system-ui, sans-serif;
+  background: #0f0f23;
+  color: #e0e7ff;
+}
+header,
+main,
+footer {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 16px 24px;
+}
+.brand {
+  font-weight: 700;
+  color: #818cf8;
+}
+h1 {
+  font-size: 2rem;
+  color: #a5b4fc;
+}
+h2 {
+  color: #818cf8;
+}
+footer {
+  color: #6b7280;
+}

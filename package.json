@@ -1,6 +1,6 @@
 {
-  "name": "froede",
-  "version": "0.0.1",
+  "name": "froede-workspace",
+  "version": "0.1.0",
   "private": true,
   "description": "front + edit + code - point-and-click editing that writes back to your real source code.",
   "license": "MIT",
@@ -8,5 +8,14 @@
     "type": "git",
     "url": "https://github.com/Mun1to/froede.git"
   },
-  "packageManager": "pnpm@11.5.1"
+  "packageManager": "pnpm@11.5.1",
+  "scripts": {
+    "build": "pnpm -r run build",
+    "e2e": "node scripts/e2e-static.mjs && node scripts/e2e-react.mjs"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.0.280",
+    "@types/node": "^22.10.0",
+    "typescript": "^5.6.0"
+  }
 }

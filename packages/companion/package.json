@@ -1,0 +1,30 @@
+{
+  "name": "@froede/companion",
+  "version": "0.1.0",
+  "description": "Local companion process for froede - receives edits from the browser extension and writes them into your real source files.",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "froede": "./dist/cli.js"
+  },
+  "main": "./dist/index.js",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  },
+  "engines": {
+    "node": ">=18.18"
+  },
+  "dependencies": {
+    "@babel/parser": "^7.26.0",
+    "@froede/protocol": "workspace:*",
+    "parse5": "^7.2.0",
+    "ws": "^8.18.0",
+    "zod": "^3.25.0"
+  },
+  "devDependencies": {
+    "@types/ws": "^8.5.0"
+  }
+}

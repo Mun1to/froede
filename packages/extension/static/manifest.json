@@ -1,0 +1,21 @@
+{
+  "manifest_version": 3,
+  "name": "froede",
+  "version": "0.1.0",
+  "description": "front + edit + code - click text on your localhost page and the change lands in your real source files.",
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "froede"
+  },
+  "permissions": ["storage", "tabs"],
+  "content_scripts": [
+    {
+      "matches": ["http://localhost/*", "http://127.0.0.1/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

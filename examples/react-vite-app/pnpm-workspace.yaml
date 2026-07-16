@@ -1,0 +1,5 @@
+# Standalone workspace root: this example must NOT join the froede
+# workspace, so it simulates a real third-party project pointing at the
+# plugin. allowBuilds is pnpm v11 supply-chain security (house rule G).
+allowBuilds:
+  esbuild: true

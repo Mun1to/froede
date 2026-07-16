@@ -1,0 +1,86 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      body {
+        width: 300px;
+        margin: 0;
+        padding: 14px;
+        font: 13px/1.5 system-ui, sans-serif;
+        background: #12122b;
+        color: #e0e7ff;
+      }
+      h1 {
+        font-size: 15px;
+        margin: 0 0 10px;
+        color: #a5b4fc;
+      }
+      label {
+        display: block;
+        margin: 8px 0 3px;
+        color: #9ca3af;
+        font-size: 12px;
+      }
+      input {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 6px 8px;
+        border-radius: 6px;
+        border: 1px solid #3730a3;
+        background: #1e1b4b;
+        color: #e0e7ff;
+        font: inherit;
+      }
+      .row {
+        display: flex;
+        gap: 8px;
+        margin-top: 12px;
+      }
+      button {
+        flex: 1;
+        padding: 7px 0;
+        border: 0;
+        border-radius: 6px;
+        background: #4f46e5;
+        color: white;
+        font: inherit;
+        cursor: pointer;
+      }
+      button:hover {
+        background: #6366f1;
+      }
+      #toggle {
+        margin-top: 10px;
+        width: 100%;
+        background: #059669;
+      }
+      #toggle:hover {
+        background: #10b981;
+      }
+      .status {
+        margin-top: 10px;
+        min-height: 18px;
+        font-size: 12px;
+        word-break: break-all;
+      }
+      .status.ok { color: #34d399; }
+      .status.err { color: #f87171; }
+      .status.info { color: #9ca3af; }
+    </style>
+  </head>
+  <body>
+    <h1>froede</h1>
+    <label for="port">Companion port</label>
+    <input id="port" type="number" min="1" max="65535" placeholder="4519" />
+    <label for="token">Token (printed by the companion)</label>
+    <input id="token" type="password" placeholder="paste token here" />
+    <div class="row">
+      <button id="save">Save</button>
+      <button id="test">Test connection</button>
+    </div>
+    <button id="toggle">Toggle edit mode in this tab</button>
+    <div id="status" class="status info"></div>
+    <script src="./popup.js"></script>
+  </body>
+</html>
