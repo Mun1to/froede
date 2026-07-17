@@ -39,7 +39,7 @@ Browser (Chrome/Edge)                     Your machine
 - **Style edits are always inline and always scoped to the exact element** - never a shared class rule, so resizing one card never moves its siblings.
 - **Security:** loopback only, Origin check (web pages can never connect), shared token (constant-time compared), and the companion physically cannot write outside the project folder it was started in. Every edit verifies the current value first and aborts on mismatch.
 
-## Quickstart (v0.2, from source)
+## Quickstart (v0.3, from source)
 
 ```powershell
 git clone https://github.com/Mun1to/froede && cd froede

@@ -27,7 +27,7 @@ Clic en cualquier elemento para seleccionarlo - aparecen tiradores en las esquin
 - **Los cambios de estilo son siempre inline y siempre scoped al elemento exacto** - nunca una regla de clase compartida, así que redimensionar una card nunca mueve a sus hermanas.
 - **Seguridad:** solo loopback, verificación de Origin (una página web nunca puede conectarse), token compartido (comparación en tiempo constante), y el companion físicamente no puede escribir fuera de la carpeta del proyecto donde arrancó. Cada edición verifica el valor actual antes de escribir y aborta si no coincide.
 
-## Quickstart (v0.2, desde el código)
+## Quickstart (v0.3, desde el código)
 
 Guía completa en [`docs/INSTALAR.md`](docs/INSTALAR.md), incluido un prompt listo para pegarle a tu asistente de IA para que lo instale él. Resumen: `pnpm install && pnpm build`, cargar `packages/extension/dist` como extensión descomprimida, y en tu proyecto correr **`froede init`** (`node <froede>/packages/companion/dist/cli.js init`): detecta el vite.config, inyecta el plugin y protege el token en el `.gitignore` solo. Después arrancas el companion ahí mismo.
 

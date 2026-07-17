@@ -8,6 +8,12 @@ Tres piezas: la **extensión** (una vez por navegador), el **companion** (uno po
 > ```
 > Detecta el `vite.config.*`, inyecta `froede()` como primer plugin, y añade `.froede-token` al `.gitignore`. Si no hay vite config, te dice cómo servir el proyecto estático. Luego solo queda arrancar el companion (paso 2) y usar la extensión.
 
+> **Atajo del día a día: `froede.bat`.** Una vez configurado el proyecto, para trabajar solo hace falta esto:
+> ```powershell
+> C:\proyectos\froede\froede.bat C:\ruta\a\tu\proyecto
+> ```
+> Abre dos terminales solas: el dev server del proyecto (si tiene `package.json`, corre `pnpm dev`) y el companion. Sin argumento usa la carpeta actual. Cerrar las ventanas = parar los procesos.
+
 ## 1. Cargar la extensión (una sola vez, y cada vez que froede se recompile)
 
 1. Compilar si hace falta: `pnpm build` en `C:\proyectos\froede`.
