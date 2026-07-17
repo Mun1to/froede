@@ -6,13 +6,13 @@
 
 [![npm](https://img.shields.io/npm/v/froede)](https://www.npmjs.com/package/froede) [![license](https://img.shields.io/npm/l/froede)](LICENSE)
 
-> **Status: v0.3.1, live on npm.** Text, size, color, typography, spacing and attributes (alt, href, placeholder, src, title) all edit end to end on both targets (static HTML and React + Vite), verified against real files - including a real `npx froede@latest init` run against a clean project. Layout and animations are on the roadmap. Not yet in the Chrome Web Store - see the quickstart below.
+> **Status: live on npm** (current version in the badge above). Text, size, color, typography, spacing and attributes (alt, href, placeholder, src, title) all edit end to end on both targets (static HTML and React + Vite), verified against real files - including a real `npx froede@latest init` run against a clean project. Layout and animations are on the roadmap. Not yet in the Chrome Web Store - the quickstart below covers the manual install.
 
 ![Selecting an element shows resize handles and a property panel](docs/screenshots/panel-select.png)
 
 ## The idea
 
-Point at an element on a live page or app, change it - text, size, color, typography, spacing - and have that change land in the real source code. Not in a sandbox. Not through an AI agent as a middleman. Not a throwaway DOM tweak that disappears on reload. As simple and intuitive as a devtools extension, not a full design app.
+Point at an element on a live page or app, change it - text, size, color, typography, spacing, attributes - and have that change land in the real source code. Not in a sandbox. Not through an AI agent as a middleman. Not a throwaway DOM tweak that disappears on reload. As simple and intuitive as a devtools extension, not a full design app.
 
 ## See it in action
 
@@ -47,15 +47,22 @@ Browser (Chrome/Edge)                     Your machine
 
 ## Quickstart
 
-```bash
-cd your-project
-npx froede init   # detects your Vite config, installs the plugin, wires it up
-npx froede        # starts the local companion; prints a port and a pairing token
-```
+1. **Get the extension** (once per browser): [download the .zip from the latest release](https://github.com/Mun1to/froede/releases/latest), unzip it, then go to `chrome://extensions`, turn on Developer mode, click "Load unpacked" and pick the unzipped folder.
 
-1. **Extension (once per browser):** [download the .zip from the latest release](https://github.com/Mun1to/froede/releases/latest), unzip it, then `chrome://extensions` -> Developer mode -> Load unpacked -> the unzipped folder. (Not on the Chrome Web Store yet.)
-2. Run the two commands above in the project you want to edit. Static HTML projects can skip `init` - just serve the folder on localhost.
-3. Open your localhost page, paste the port + token from the companion into the extension popup, hit "Toggle edit mode". Click an element to select it (resize handles + a property panel: size, color, typography, spacing, attributes), double-click text to edit it in place. The file is saved for real - your undo is `git diff`.
+2. **Wire up your project** (static HTML projects skip this - just serve the folder on localhost):
+
+   ```bash
+   cd your-project
+   npx froede init   # detects your Vite config, installs the plugin, wires it up
+   ```
+
+3. **Start the companion and pair it:**
+
+   ```bash
+   npx froede        # prints a port and a pairing token
+   ```
+
+   Open your localhost page, paste the port + token into the extension popup, and hit "Toggle edit mode". Click to select, double-click to edit text - every change is saved to the real file, and your undo is `git diff`.
 
 Full walkthrough, including a ready-to-paste prompt for your AI coding session: [`docs/INSTALAR.md`](docs/INSTALAR.md) (Spanish).
 

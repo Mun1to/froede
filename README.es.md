@@ -6,13 +6,13 @@
 
 [![npm](https://img.shields.io/npm/v/froede)](https://www.npmjs.com/package/froede) [![license](https://img.shields.io/npm/l/froede)](LICENSE)
 
-> **Estado: v0.3.1, publicado en npm.** Texto, tamaño, color, tipografía, espaciado y atributos (alt, href, placeholder, src, title) editan de punta a punta en ambos targets (HTML estático y React + Vite), verificado contra archivos reales - incluida una corrida real de `npx froede@latest init` contra un proyecto limpio. Layout y animaciones están en el roadmap. Todavía no está en la Chrome Web Store - ver el quickstart abajo.
+> **Estado: publicado en npm** (versión actual en el badge de arriba). Texto, tamaño, color, tipografía, espaciado y atributos (alt, href, placeholder, src, title) editan de punta a punta en ambos targets (HTML estático y React + Vite), verificado contra archivos reales - incluida una corrida real de `npx froede@latest init` contra un proyecto limpio. Layout y animaciones están en el roadmap. Todavía no está en la Chrome Web Store - el quickstart de abajo cubre la instalación manual.
 
 ![Al seleccionar un elemento aparecen tiradores de redimensión y un panel de propiedades](docs/screenshots/panel-select.png)
 
 ## La idea
 
-Señalas un elemento en una página o app en ejecución, lo cambias - texto, tamaño, color, tipografía, espaciado - y ese cambio llega al código fuente real. Sin sandbox. Sin un agente de IA como intermediario. Sin ser un cambio efímero en el DOM que desaparece al recargar. Tan simple e intuitivo como una extensión de devtools, no una app de diseño completa.
+Señalas un elemento en una página o app en ejecución, lo cambias - texto, tamaño, color, tipografía, espaciado, atributos - y ese cambio llega al código fuente real. Sin sandbox. Sin un agente de IA como intermediario. Sin ser un cambio efímero en el DOM que desaparece al recargar. Tan simple e intuitivo como una extensión de devtools, no una app de diseño completa.
 
 ## En acción
 
@@ -35,15 +35,22 @@ froede edita archivos de tu ordenador, así que esto importa: todo corre **en lo
 
 ## Quickstart
 
-```bash
-cd tu-proyecto
-npx froede init   # detecta tu vite.config, instala el plugin y lo cablea solo
-npx froede        # arranca el companion local; imprime un puerto y un token
-```
+1. **Consigue la extensión** (una vez por navegador): [descarga el .zip de la última release](https://github.com/Mun1to/froede/releases/latest), descomprímelo, entra en `chrome://extensions`, activa el Modo desarrollador, pulsa "Cargar descomprimida" y elige la carpeta descomprimida.
 
-1. **Extensión (una vez por navegador):** [descarga el .zip de la última release](https://github.com/Mun1to/froede/releases/latest), descomprímelo, y `chrome://extensions` -> Modo desarrollador -> Cargar descomprimida -> la carpeta descomprimida. (Todavía no está en la Chrome Web Store.)
-2. Corre los dos comandos de arriba en el proyecto que quieras editar. Los proyectos HTML estáticos se saltan `init` - solo sirve la carpeta en localhost.
-3. Abre tu página en localhost, pega el puerto + token del companion en el popup de la extensión, activa "Toggle edit mode". Clic en un elemento para seleccionarlo (tiradores + panel de tamaño, color, tipografía, espaciado, atributos), doble clic en un texto para editarlo en el sitio. El archivo se guarda de verdad - tu deshacer es `git diff`.
+2. **Prepara tu proyecto** (los HTML estáticos se saltan este paso - basta servir la carpeta en localhost):
+
+   ```bash
+   cd tu-proyecto
+   npx froede init   # detecta tu vite.config, instala el plugin y lo cablea solo
+   ```
+
+3. **Arranca el companion y emparéjalo:**
+
+   ```bash
+   npx froede        # imprime un puerto y un token de emparejamiento
+   ```
+
+   Abre tu página en localhost, pega el puerto + token en el popup de la extensión, y activa "Toggle edit mode". Clic para seleccionar, doble clic para editar texto - cada cambio se guarda en el archivo real, y tu deshacer es `git diff`.
 
 Guía completa, con un prompt listo para pegarle a tu asistente de IA: [`docs/INSTALAR.md`](docs/INSTALAR.md).
 
