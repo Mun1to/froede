@@ -144,8 +144,14 @@ export async function runInit(root: string): Promise<void> {
   }[ignored];
   log(`  ${ignoreMsg}\n`);
 
+  // Point at the release page by URL: someone who installed via npx has no
+  // repo checkout, so "load the extension folder" would be a dead end.
   log("Next steps:");
-  log("  1. Run the companion here: froede   (prints a port and a pairing token)");
-  log("  2. Load the extension once: chrome://extensions -> Load unpacked -> the froede extension folder");
-  log("  3. Open your localhost page, paste the port + token in the popup, toggle edit mode.");
+  log("  1. Get the extension (once per browser):");
+  log("     https://github.com/Mun1to/froede/releases/latest");
+  log("     Download froede-extension.zip, unzip it, then open chrome://extensions,");
+  log("     turn on Developer mode, click \"Load unpacked\" and pick the unzipped folder.");
+  log("  2. Start the companion here:  npx froede");
+  log("  3. Open your localhost page, paste the port + token into the extension popup,");
+  log("     then hit \"Toggle edit mode\" and click something.");
 }

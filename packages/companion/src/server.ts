@@ -18,7 +18,7 @@ import {
 } from "./targets/staticHtml.js";
 import { tokensMatch } from "./token.js";
 
-export const COMPANION_VERSION = "0.3.1";
+export const COMPANION_VERSION = "0.3.2";
 
 export interface CompanionServer {
   close(): Promise<void>;
