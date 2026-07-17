@@ -1,8 +1,9 @@
 {
-  "name": "@froede/vite-plugin",
+  "name": "vite-plugin-froede",
   "version": "0.3.0",
   "description": "Vite plugin that annotates JSX elements with their source location during dev, so the froede extension can map clicks back to real code.",
   "license": "MIT",
+  "author": "Mun1to",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -17,6 +18,28 @@
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Mun1to/froede.git",
+    "directory": "packages/vite-plugin"
+  },
+  "homepage": "https://github.com/Mun1to/froede#readme",
+  "bugs": "https://github.com/Mun1to/froede/issues",
+  "keywords": [
+    "vite-plugin",
+    "froede",
+    "visual-editor",
+    "jsx",
+    "devtools"
+  ],
+  "peerDependencies": {
+    "vite": ">=4"
+  },
+  "peerDependenciesMeta": {
+    "vite": {
+      "optional": true
+    }
   },
   "dependencies": {
     "@babel/parser": "^7.26.0",

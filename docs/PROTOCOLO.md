@@ -33,7 +33,7 @@ Si `protocolVersion` no coincide, la extensión muestra error claro (extensión 
 ### `write-text` -> `write-result`
 
 ```jsonc
-// target react (de data-froede-loc, estampado por @froede/vite-plugin)
+// target react (de data-froede-loc, estampado por vite-plugin-froede)
 {
   "type": "write-text", "requestId": "...",
   "target": { "kind": "react", "file": "src/App.tsx", "line": 4, "column": 6 },

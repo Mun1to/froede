@@ -1,8 +1,9 @@
 {
-  "name": "@froede/companion",
+  "name": "froede",
   "version": "0.3.0",
-  "description": "Local companion process for froede - receives edits from the browser extension and writes them into your real source files.",
+  "description": "front + edit + code. Click on your localhost page and the change lands in your real source files. This is the local companion + CLI.",
   "license": "MIT",
+  "author": "Mun1to",
   "type": "module",
   "bin": {
     "froede": "./dist/cli.js"
@@ -17,9 +18,25 @@
   "engines": {
     "node": ">=18.18"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Mun1to/froede.git",
+    "directory": "packages/companion"
+  },
+  "homepage": "https://github.com/Mun1to/froede#readme",
+  "bugs": "https://github.com/Mun1to/froede/issues",
+  "keywords": [
+    "visual-editor",
+    "devtools",
+    "browser-extension",
+    "live-editing",
+    "wysiwyg",
+    "localhost",
+    "developer-tools"
+  ],
   "dependencies": {
     "@babel/parser": "^7.26.0",
-    "@froede/protocol": "workspace:*",
+    "froede-protocol": "workspace:*",
     "magic-string": "^0.30.0",
     "parse5": "^7.2.0",
     "ws": "^8.18.0",

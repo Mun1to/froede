@@ -1,8 +1,9 @@
 {
-  "name": "@froede/protocol",
+  "name": "froede-protocol",
   "version": "0.3.0",
-  "description": "Wire protocol shared by the froede extension and companion.",
+  "description": "Wire protocol shared by the froede extension and companion (zod schemas).",
   "license": "MIT",
+  "author": "Mun1to",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -18,6 +19,18 @@
   "scripts": {
     "build": "tsc -p tsconfig.json"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Mun1to/froede.git",
+    "directory": "packages/protocol"
+  },
+  "homepage": "https://github.com/Mun1to/froede#readme",
+  "bugs": "https://github.com/Mun1to/froede/issues",
+  "keywords": [
+    "froede",
+    "protocol",
+    "zod"
+  ],
   "dependencies": {
     "zod": "^3.25.0"
   }

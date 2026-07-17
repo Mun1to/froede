@@ -15,9 +15,6 @@ importers:
         specifier: ^18.3.0
         version: 18.3.1(react@18.3.1)
     devDependencies:
-      '@froede/vite-plugin':
-        specifier: file:../../packages/vite-plugin
-        version: file:../../packages/vite-plugin
       '@types/react':
         specifier: ^18.3.0
         version: 18.3.31
@@ -33,6 +30,9 @@ importers:
       vite:
         specifier: ^6.0.0
         version: 6.4.3
+      vite-plugin-froede:
+        specifier: file:../../packages/vite-plugin
+        version: file:../../packages/vite-plugin(vite@6.4.3)
 
 packages:
 
@@ -274,9 +274,6 @@ packages:
     engines: {node: '>=18'}
     cpu: [x64]
     os: [win32]
-
-  '@froede/vite-plugin@file:../../packages/vite-plugin':
-    resolution: {directory: ../../packages/vite-plugin, type: directory}
 
   '@jridgewell/gen-mapping@0.3.13':
     resolution: {integrity: sha512-2kkt/7niJ6MgEPxF0bYdQ6etZaA+fQvDcLKckhy1yIQOzaoKjBBjSj63/aLVjYE3qhRt5dvM+uUyfCg6UKCBbA==}
@@ -615,6 +612,14 @@ packages:
     peerDependencies:
       browserslist: '>= 4.21.0'
 
+  vite-plugin-froede@file:../../packages/vite-plugin:
+    resolution: {directory: ../../packages/vite-plugin, type: directory}
+    peerDependencies:
+      vite: '>=4'
+    peerDependenciesMeta:
+      vite:
+        optional: true
+
   vite@6.4.3:
     resolution: {integrity: sha512-NTKlcQjlAK7MlQoyb6LgaqHc8sso/pVyUJYWMws3jg21uTJw/LddqIFPcPqP6PzpgbIcZyKI85sFE4HBrQDA8A==}
     engines: {node: ^18.0.0 || ^20.0.0 || >=22.0.0}
@@ -849,11 +854,6 @@ snapshots:
 
   '@esbuild/win32-x64@0.25.12':
     optional: true
-
-  '@froede/vite-plugin@file:../../packages/vite-plugin':
-    dependencies:
-      '@babel/parser': 7.29.7
-      magic-string: 0.30.21
 
   '@jridgewell/gen-mapping@0.3.13':
     dependencies:
@@ -1156,6 +1156,13 @@ snapshots:
       browserslist: 4.28.6
       escalade: 3.2.0
       picocolors: 1.1.1
+
+  vite-plugin-froede@file:../../packages/vite-plugin(vite@6.4.3):
+    dependencies:
+      '@babel/parser': 7.29.7
+      magic-string: 0.30.21
+    optionalDependencies:
+      vite: 6.4.3
 
   vite@6.4.3:
     dependencies:

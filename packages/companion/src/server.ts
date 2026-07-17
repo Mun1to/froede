@@ -4,7 +4,7 @@ import {
   ClientMessage,
   PROTOCOL_VERSION,
   type ServerMessage,
-} from "@froede/protocol";
+} from "froede-protocol";
 import { publicErrorMessage } from "./errors.js";
 import {
   applyReactAttrEdit,

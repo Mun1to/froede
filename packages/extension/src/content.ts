@@ -261,7 +261,7 @@
     const target = resolveTarget(el);
     if (!target) {
       toast(
-        "froede: this element is not mapped to source (no data-froede-loc - is @froede/vite-plugin installed?)",
+        "froede: this element is not mapped to source (no data-froede-loc - is vite-plugin-froede installed?)",
       );
       return;
     }
@@ -274,7 +274,7 @@
     const target = resolveTarget(el);
     if (!target) {
       toast(
-        "froede: this element is not mapped to source (no data-froede-loc - is @froede/vite-plugin installed?)",
+        "froede: this element is not mapped to source (no data-froede-loc - is vite-plugin-froede installed?)",
       );
       return;
     }

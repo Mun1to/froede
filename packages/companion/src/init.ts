@@ -10,7 +10,7 @@ const VITE_CONFIG_NAMES = [
   "vite.config.mjs",
 ];
 
-/** Absolute path to @froede/vite-plugin's built entry, forward slashes. */
+/** Absolute path to vite-plugin-froede's built entry, forward slashes. */
 function pluginDistPath(): string {
   // dist/init.js -> ../../vite-plugin/dist/index.js
   const here = path.dirname(fileURLToPath(import.meta.url));
@@ -21,7 +21,7 @@ function pluginDistPath(): string {
 }
 
 /**
- * One-step setup: wires @froede/vite-plugin into the project's vite config
+ * One-step setup: wires vite-plugin-froede into the project's vite config
  * (when there is one) and gitignores the token. Conservative on purpose:
  * if the config doesn't look like something it can patch safely, it prints
  * the manual steps instead of guessing.
