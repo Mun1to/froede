@@ -16,7 +16,7 @@ export default function App() {
         <section className="hero">
           <p className="eyebrow">Portfolio</p>
           <h1>I design and build things for the web</h1>
-          <p style={{ width: "826px", height: "47px", maxWidth: "none" }} className="lead">
+          <p className="lead">
             Frontend developer focused on clean interfaces, fast pages and small
             tools that make building easier.
           </p>

@@ -2,23 +2,34 @@
 
 **front + edit + code.** Un toolkit ligero para editar el código detrás de una web o app en ejecución haciendo clic en lo que ves - sin bucear en el código fuente, sin necesitar un IDE completo.
 
-> **Estado: MVP v0.1 (funcionando).** La edición de texto visible funciona de punta a punta en ambos targets (HTML estático y React + Vite), verificada contra archivos reales. Estilos, layout y más están en el roadmap. Todavía no está publicado en npm ni en la Chrome Web Store - ver el quickstart abajo.
+> **Estado: v0.2 (funcionando).** Texto, tamaño, color, tipografía y espaciado editan de punta a punta en ambos targets (HTML estático y React + Vite), verificado contra archivos reales. Layout y animaciones están en el roadmap. Todavía no está publicado en npm ni en la Chrome Web Store - ver el quickstart abajo.
+
+![Al seleccionar un elemento aparecen tiradores de redimensión y un panel de propiedades](docs/screenshots/panel-select.png)
 
 ## La idea
 
-Señalas un elemento en una página o app en ejecución, lo cambias - texto, estilo, layout - y ese cambio llega al código fuente real. Sin sandbox. Sin un agente de IA como intermediario. Sin ser un cambio efímero en el DOM que desaparece al recargar. Tan simple e intuitivo como una extensión de devtools, no una app de diseño completa.
+Señalas un elemento en una página o app en ejecución, lo cambias - texto, tamaño, color, tipografía, espaciado - y ese cambio llega al código fuente real. Sin sandbox. Sin un agente de IA como intermediario. Sin ser un cambio efímero en el DOM que desaparece al recargar. Tan simple e intuitivo como una extensión de devtools, no una app de diseño completa.
+
+## En acción
+
+| Antes | Editando texto | Seleccionado para estilo |
+|---|---|---|
+| ![Una página de demo simple](docs/screenshots/hero.png) | ![Un título editándose en el sitio](docs/screenshots/text-edit.png) | ![Un elemento seleccionado con tiradores y panel de propiedades](docs/screenshots/panel-select.png) |
+
+Clic en cualquier elemento para seleccionarlo - aparecen tiradores en las esquinas (Shift+arrastre para trabar a un solo eje) y un panel con tamaño, color, tipografía y espaciado. Doble clic en un texto para editarlo en el sitio. Cada cambio se escribe directo en el archivo fuente real.
 
 ## Cómo funciona
 
-- **HTML estático:** la extensión manda la ruta DOM del elemento; el companion la mapea sobre el archivo con parse5 (mismo algoritmo WHATWG que el navegador) y hace el splice del nodo de texto.
-- **React + Vite:** un plugin de Vite mínimo (`@froede/vite-plugin`, solo en dev) marca cada elemento con `data-froede-loc="src/App.tsx:4:6"`; el companion reparsea ese archivo y edita el texto JSX exacto. El HMR de Vite muestra el cambio al instante.
-- **Seguridad:** solo loopback, verificación de Origin (una página web nunca puede conectarse), token compartido (comparación en tiempo constante), y el companion físicamente no puede escribir fuera de la carpeta del proyecto donde arrancó. Cada edición verifica el texto actual antes de escribir y aborta si no coincide.
+- **HTML estático:** la extensión manda la ruta DOM del elemento; el companion la mapea sobre el archivo con parse5 (mismo algoritmo WHATWG que el navegador) y hace el splice del nodo de texto o del atributo `style="..."`.
+- **React + Vite:** un plugin de Vite mínimo (`@froede/vite-plugin`, solo en dev) marca cada elemento con `data-froede-loc="src/App.tsx:4:6"`; el companion reparsea ese archivo y edita el texto JSX exacto o parchea el objeto `style={{}}`. El HMR de Vite muestra el cambio al instante.
+- **Los cambios de estilo son siempre inline y siempre scoped al elemento exacto** - nunca una regla de clase compartida, así que redimensionar una card nunca mueve a sus hermanas.
+- **Seguridad:** solo loopback, verificación de Origin (una página web nunca puede conectarse), token compartido (comparación en tiempo constante), y el companion físicamente no puede escribir fuera de la carpeta del proyecto donde arrancó. Cada edición verifica el valor actual antes de escribir y aborta si no coincide.
 
-## Quickstart (v0.1, desde el código)
+## Quickstart (v0.2, desde el código)
 
 Guía completa en [`docs/INSTALAR.md`](docs/INSTALAR.md), incluido un prompt listo para pegarle a tu asistente de IA para que lo instale él. Resumen: `pnpm install && pnpm build`, cargar `packages/extension/dist` como extensión descomprimida, arrancar el companion con el cwd en tu proyecto, y en proyectos Vite añadir `froede()` al `vite.config.ts`.
 
-v0.1 edita solo texto plano visible (sin estilos/layout todavía, sin `{expresiones}` en JSX). Pruébalo con `examples/static-site` y `examples/react-vite-app`. El deshacer es `git diff`.
+v0.2 edita texto plano visible y tamaño/color/tipografía/espaciado inline - todavía sin layout (mover/duplicar/borrar) ni animaciones. Pruébalo con `examples/static-site`, `examples/react-vite-app` o `examples/demo-site`. El deshacer es `git diff`.
 
 ## Panorama (a mediados de 2026)
 
