@@ -1,6 +1,6 @@
 {
   "name": "@froede/companion",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Local companion process for froede - receives edits from the browser extension and writes them into your real source files.",
   "license": "MIT",
   "type": "module",

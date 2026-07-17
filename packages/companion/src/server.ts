@@ -10,7 +10,7 @@ import { applyReactStyleEdit, applyReactTextEdit } from "./targets/reactSource.j
 import { applyStaticStyleEdit, applyStaticTextEdit } from "./targets/staticHtml.js";
 import { tokensMatch } from "./token.js";
 
-export const COMPANION_VERSION = "0.1.0";
+export const COMPANION_VERSION = "0.2.0";
 
 export interface CompanionServer {
   close(): Promise<void>;

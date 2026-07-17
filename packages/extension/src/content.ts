@@ -37,7 +37,10 @@
     document.addEventListener("keydown", onKeyDown, true);
     window.addEventListener("scroll", onReposition, true);
     window.addEventListener("resize", onReposition);
-    toast("froede: edit mode ON - click an element to select it, double-click text to edit it (Esc to exit)");
+    toast(
+      "froede: edit mode ON - click to select, double-click text to edit, Shift+drag a handle to resize on one axis (Esc to exit)",
+      4200,
+    );
   }
 
   function disable(): void {
@@ -395,6 +398,8 @@
     });
   }
 
+  const MAX_MIN_PROPS = ["maxWidth", "maxHeight", "minWidth", "minHeight"] as const;
+
   function startResize(
     event: MouseEvent,
     el: HTMLElement,
@@ -412,11 +417,35 @@
     const growX = corner === "ne" || corner === "se" ? 1 : -1;
     const growY = corner === "sw" || corner === "se" ? 1 : -1;
 
+    // If a CSS class already caps this element (e.g. `.lead { max-width }`),
+    // an inline width/height alone gets silently overridden by the cascade -
+    // dragging looks like it "only works in one direction". Neutralize any
+    // constraint that isn't already permissive, alongside the resize.
+    const computed = getComputedStyle(el);
+    const freeValue: Record<(typeof MAX_MIN_PROPS)[number], string> = {
+      maxWidth: "none",
+      maxHeight: "none",
+      minWidth: "0px",
+      minHeight: "0px",
+    };
+    const constraints = MAX_MIN_PROPS.filter((prop) => {
+      const current = computed[prop];
+      return prop.startsWith("max") ? current !== "none" : parseFloat(current) > 0;
+    });
+    const previousConstraint: Partial<Record<(typeof MAX_MIN_PROPS)[number], string>> = {};
+    for (const prop of constraints) previousConstraint[prop] = el.style.getPropertyValue(cssPropFor(prop));
+
     function onMove(e: MouseEvent): void {
-      const w = Math.max(1, Math.round(startRect.width + (e.clientX - startX) * growX));
-      const h = Math.max(1, Math.round(startRect.height + (e.clientY - startY) * growY));
-      el.style.setProperty("width", `${w}px`);
-      el.style.setProperty("height", `${h}px`);
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+      // Shift locks to whichever axis is dragging further, like Figma.
+      const lockY = e.shiftKey && Math.abs(dx) >= Math.abs(dy);
+      const lockX = e.shiftKey && !lockY;
+      const w = lockX ? startRect.width : Math.max(1, Math.round(startRect.width + dx * growX));
+      const h = lockY ? startRect.height : Math.max(1, Math.round(startRect.height + dy * growY));
+      el.style.setProperty("width", `${Math.round(w)}px`);
+      el.style.setProperty("height", `${Math.round(h)}px`);
+      for (const prop of constraints) el.style.setProperty(cssPropFor(prop), freeValue[prop]);
       currentReposition?.();
     }
 
@@ -424,21 +453,30 @@
       document.removeEventListener("mousemove", onMove, true);
       document.removeEventListener("mouseup", onUp, true);
       paused = false;
-      const width = el.style.getPropertyValue("width");
-      const height = el.style.getPropertyValue("height");
-      sendStyleWrite(
-        el,
-        target,
-        { width, height },
-        { width: previousWidth, height: previousHeight },
-        () => {
-          if (previousWidth) el.style.setProperty("width", previousWidth);
-          else el.style.removeProperty("width");
-          if (previousHeight) el.style.setProperty("height", previousHeight);
-          else el.style.removeProperty("height");
-          currentReposition?.();
-        },
-      );
+      const style: Record<string, string> = {
+        width: el.style.getPropertyValue("width"),
+        height: el.style.getPropertyValue("height"),
+      };
+      const previousStyle: Record<string, string> = {
+        width: previousWidth,
+        height: previousHeight,
+      };
+      for (const prop of constraints) {
+        style[prop] = freeValue[prop];
+        previousStyle[prop] = previousConstraint[prop] ?? "";
+      }
+      sendStyleWrite(el, target, style, previousStyle, () => {
+        if (previousWidth) el.style.setProperty("width", previousWidth);
+        else el.style.removeProperty("width");
+        if (previousHeight) el.style.setProperty("height", previousHeight);
+        else el.style.removeProperty("height");
+        for (const prop of constraints) {
+          const prev = previousConstraint[prop];
+          if (prev) el.style.setProperty(cssPropFor(prop), prev);
+          else el.style.removeProperty(cssPropFor(prop));
+        }
+        currentReposition?.();
+      });
       if (selectedEl === el) select(el); // refresh the panel's W/H fields
     }
 

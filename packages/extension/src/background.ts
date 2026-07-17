@@ -38,9 +38,12 @@
       await new Promise<void>((resolve, reject) => {
         sock.onopen = () => resolve();
         sock.onerror = () =>
+          // The WebSocket API deliberately hides *why* a handshake failed
+          // (spec/security), so "unreachable" and "wrong token" look
+          // identical here - state both possibilities rather than guess.
           reject(
             new Error(
-              `cannot reach the companion on 127.0.0.1:${port} - is it running? (token/port in the popup)`,
+              `cannot reach the companion on 127.0.0.1:${port} - either it's not running, or the token in the popup is stale (it changes every time the companion restarts - copy it again from its terminal)`,
             ),
           );
       });

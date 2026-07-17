@@ -64,6 +64,7 @@ export type WriteTextRequest = z.infer<typeof WriteTextRequest>;
  * to kebab-case CSS itself.
  */
 const PX_OR_PERCENT = /^\d+(\.\d+)?(px|%)$/;
+const PX_OR_NONE = /^(none|\d+(\.\d+)?(px|%))$/;
 const PX_ONLY = /^\d+(\.\d+)?px$/;
 const HEX_COLOR = /^#[0-9a-f]{6}$/i;
 const FONT_WEIGHT = /^(normal|bold|[1-9]00)$/;
@@ -72,6 +73,14 @@ export const StyleEdits = z
   .object({
     width: z.string().regex(PX_OR_PERCENT).optional(),
     height: z.string().regex(PX_OR_PERCENT).optional(),
+    // Paired with width/height by the content script whenever the element's
+    // existing CSS already constrains that dimension (e.g. a class with
+    // max-width) - otherwise the inline width/height would be silently
+    // capped and dragging would look like it "only works in one direction".
+    maxWidth: z.string().regex(PX_OR_NONE).optional(),
+    maxHeight: z.string().regex(PX_OR_NONE).optional(),
+    minWidth: z.string().regex(PX_OR_NONE).optional(),
+    minHeight: z.string().regex(PX_OR_NONE).optional(),
     color: z.string().regex(HEX_COLOR).optional(),
     backgroundColor: z.string().regex(HEX_COLOR).optional(),
     fontSize: z.string().regex(PX_ONLY).optional(),

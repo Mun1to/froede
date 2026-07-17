@@ -164,6 +164,21 @@ if (!written.includes(`width: "320px"`) || !written.includes(`color: "#ff0000"`)
   fail("style object not patched correctly: " + written.match(/<h1[^>]*>/)?.[0]);
 }
 
+// maxWidth (the fix for CSS classes capping an inline width/height) must
+// round-trip through the allowlist and land as a real value, not "none".
+const respMax = await send({
+  type: "write-style",
+  requestId: "e2e-max",
+  target: { kind: "react", file: "src/App.tsx", line, column },
+  previousStyle: { maxWidth: "" },
+  style: { maxWidth: "none" },
+});
+if (!respMax.ok) fail("maxWidth insert failed: " + respMax.error);
+written = readFileSync(targetFile, "utf8");
+if (!written.includes(`maxWidth: "none"`)) {
+  fail("maxWidth not written correctly: " + written.match(/<h1[^>]*>/)?.[0]);
+}
+
 // Mismatch check for style: stale previousStyle must be rejected.
 const resp6 = await send({
   type: "write-style",
