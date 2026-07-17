@@ -75,28 +75,69 @@
       }
       .froede-handle {
         position: fixed; width: 10px; height: 10px; z-index: 2147483647;
-        background: #f59e0b; border: 2px solid #1e1b4b; border-radius: 2px;
+        background: #f59e0b; border: 2px solid #1e1b4b; border-radius: 3px;
+        box-shadow: 0 1px 4px rgba(0,0,0,.5);
         cursor: nwse-resize;
       }
       .froede-handle-ne, .froede-handle-sw { cursor: nesw-resize; }
+
+      .froede-panel, .froede-panel * { box-sizing: border-box; }
       .froede-panel {
-        position: fixed; z-index: 2147483647; width: 210px;
-        background: #1e1b4b; color: #e0e7ff; font: 12px/1.5 system-ui, sans-serif;
-        border-radius: 10px; padding: 10px; box-shadow: 0 8px 24px rgba(0,0,0,.45);
-        border: 1px solid #3730a3;
+        position: fixed; z-index: 2147483647; width: 236px;
+        background: rgba(30, 27, 75, 0.88);
+        backdrop-filter: blur(14px) saturate(160%);
+        -webkit-backdrop-filter: blur(14px) saturate(160%);
+        color: #e0e7ff; font: 12px/1.4 -apple-system, system-ui, sans-serif;
+        border-radius: 14px; padding: 12px;
+        border: 1px solid rgba(129, 140, 248, 0.35);
+        box-shadow: 0 16px 40px rgba(0,0,0,.5), 0 0 0 1px rgba(0,0,0,.2);
       }
-      .froede-panel-title { font-weight: 700; color: #a5b4fc; margin-bottom: 6px; }
-      .froede-row { display: flex; align-items: center; gap: 6px; margin: 5px 0; }
-      .froede-row label { width: 30px; color: #9ca3af; flex-shrink: 0; }
+      .froede-panel-header {
+        display: flex; align-items: center; justify-content: space-between;
+        margin-bottom: 10px; padding-bottom: 8px;
+        border-bottom: 1px solid rgba(129, 140, 248, 0.2);
+      }
+      .froede-panel-tag {
+        font-weight: 700; font-size: 11px; letter-spacing: .06em;
+        text-transform: uppercase; color: #a5b4fc;
+      }
+      .froede-panel-close {
+        width: 20px; height: 20px; border-radius: 50%; border: none;
+        background: rgba(255,255,255,.08); color: #9ca3af; cursor: pointer;
+        font: 13px/1 system-ui, sans-serif;
+        display: flex; align-items: center; justify-content: center; padding: 0;
+      }
+      .froede-panel-close:hover { background: rgba(255,255,255,.18); color: #f1f5f9; }
+
+      .froede-section + .froede-section { margin-top: 10px; }
+      .froede-section-label {
+        font-size: 10px; letter-spacing: .08em; text-transform: uppercase;
+        color: #7c83a6; margin-bottom: 6px;
+      }
+      .froede-row { display: flex; align-items: center; gap: 8px; }
+      .froede-row + .froede-row { margin-top: 6px; }
+      .froede-field { flex: 1; display: flex; align-items: center; gap: 6px; min-width: 0; }
+      .froede-field label { color: #9ca3af; flex-shrink: 0; width: 32px; }
+
       .froede-row input[type="number"] {
-        width: 62px; background: #14152b; border: 1px solid #3730a3; color: #e0e7ff;
-        border-radius: 4px; padding: 3px 5px; font: inherit;
+        width: 100%; min-width: 0;
+        background: rgba(255,255,255,.05); border: 1px solid rgba(129,140,248,.3);
+        color: #e0e7ff; border-radius: 7px; padding: 5px 7px; font: inherit;
+      }
+      .froede-row input[type="number"]:focus {
+        outline: none; border-color: #818cf8; background: rgba(255,255,255,.09);
       }
       .froede-row input[type="color"] {
-        width: 32px; height: 22px; padding: 0; border: 1px solid #3730a3;
-        border-radius: 4px; background: none;
+        -webkit-appearance: none; appearance: none;
+        width: 26px; height: 26px; padding: 0; flex-shrink: 0;
+        border-radius: 50%; border: 2px solid rgba(255,255,255,.25);
+        cursor: pointer; background: none;
       }
-      .froede-row input[type="checkbox"] { width: 16px; height: 16px; }
+      .froede-row input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; border-radius: 50%; }
+      .froede-row input[type="color"]::-webkit-color-swatch { border: none; border-radius: 50%; }
+      .froede-row input[type="checkbox"] {
+        width: 17px; height: 17px; flex-shrink: 0; accent-color: #6366f1; cursor: pointer;
+      }
     `;
     document.documentElement.appendChild(style);
   }
@@ -299,11 +340,12 @@
     place(handles.sw, r.left, r.bottom);
     place(handles.se, r.right, r.bottom);
 
-    const panelWidth = 210;
+    const panelWidth = 236;
+    const panelHeight = 300;
     const left = Math.max(8, Math.min(r.left, window.innerWidth - panelWidth - 16));
-    const belowFits = r.bottom + 260 < window.innerHeight;
+    const belowFits = r.bottom + panelHeight < window.innerHeight;
     panel.style.left = `${left}px`;
-    panel.style.top = belowFits ? `${r.bottom + 8}px` : `${Math.max(8, r.top - 254)}px`;
+    panel.style.top = belowFits ? `${r.bottom + 8}px` : `${Math.max(8, r.top - panelHeight - 6)}px`;
   }
 
   function toHex(rgbOrHex: string): string {
@@ -335,25 +377,47 @@
     const computed = getComputedStyle(el);
     const isBold = parseInt(computed.fontWeight, 10) >= 700;
 
+    const field = (labelText: string, inner: string): string =>
+      `<div class="froede-field"><label>${labelText}</label>${inner}</div>`;
+    const numberInput = (key: string, value: number, min: number): string =>
+      `<input data-k="${key}" type="number" min="${min}" value="${value}">`;
+
     panel.innerHTML = `
-      <div class="froede-panel-title">&lt;${el.tagName.toLowerCase()}&gt;</div>
-      <div class="froede-row">
-        <label>W</label><input data-k="width" type="number" min="1" value="${Math.round(rect.width)}">
-        <label>H</label><input data-k="height" type="number" min="1" value="${Math.round(rect.height)}">
+      <div class="froede-panel-header">
+        <span class="froede-panel-tag">&lt;${el.tagName.toLowerCase()}&gt;</span>
+        <button type="button" class="froede-panel-close" data-froede-ui aria-label="Deselect">&times;</button>
       </div>
-      <div class="froede-row">
-        <label>Text</label><input data-k="color" type="color" value="${toHex(computed.color)}">
-        <label>Fill</label><input data-k="backgroundColor" type="color" value="${toHex(computed.backgroundColor)}">
+      <div class="froede-section">
+        <div class="froede-section-label">Size</div>
+        <div class="froede-row">
+          ${field("W", numberInput("width", Math.round(rect.width), 1))}
+          ${field("H", numberInput("height", Math.round(rect.height), 1))}
+        </div>
       </div>
-      <div class="froede-row">
-        <label>Font</label><input data-k="fontSize" type="number" min="1" value="${Math.round(parseFloat(computed.fontSize) || 16)}">
-        <label>Bold</label><input data-k="fontWeight" type="checkbox" ${isBold ? "checked" : ""}>
+      <div class="froede-section">
+        <div class="froede-section-label">Color</div>
+        <div class="froede-row">
+          ${field("Text", `<input data-k="color" type="color" value="${toHex(computed.color)}">`)}
+          ${field("Fill", `<input data-k="backgroundColor" type="color" value="${toHex(computed.backgroundColor)}">`)}
+        </div>
       </div>
-      <div class="froede-row">
-        <label>Pad</label><input data-k="padding" type="number" min="0" value="${Math.round(parseFloat(computed.paddingTop) || 0)}">
-        <label>Gap</label><input data-k="margin" type="number" min="0" value="${Math.round(parseFloat(computed.marginTop) || 0)}">
+      <div class="froede-section">
+        <div class="froede-section-label">Type</div>
+        <div class="froede-row">
+          ${field("Size", numberInput("fontSize", Math.round(parseFloat(computed.fontSize) || 16), 1))}
+          ${field("Bold", `<input data-k="fontWeight" type="checkbox" ${isBold ? "checked" : ""}>`)}
+        </div>
+      </div>
+      <div class="froede-section">
+        <div class="froede-section-label">Spacing</div>
+        <div class="froede-row">
+          ${field("Pad", numberInput("padding", Math.round(parseFloat(computed.paddingTop) || 0), 0))}
+          ${field("Gap", numberInput("margin", Math.round(parseFloat(computed.marginTop) || 0), 0))}
+        </div>
       </div>
     `;
+
+    panel.querySelector(".froede-panel-close")?.addEventListener("click", () => deselect());
 
     panel.querySelectorAll<HTMLInputElement>("input[data-k]").forEach((input) => {
       const key = input.dataset.k;
