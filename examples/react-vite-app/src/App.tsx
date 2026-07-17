@@ -13,7 +13,7 @@ export default function App() {
       </header>
 
       <main>
-        <section className="hero">
+        <section style={{ width: "857px", height: "361px" }} className="hero">
           <p className="eyebrow">Portfolio</p>
           <h1>I design and build things for the web</h1>
           <p className="lead">

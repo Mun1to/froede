@@ -14,11 +14,11 @@ Señalas un elemento en una página o app en ejecución, lo cambias - texto, tam
 
 ## En acción
 
-| Antes | Editando texto | Seleccionado para estilo |
+| Antes | Editando texto | Seleccionado: estilo + atributos |
 |---|---|---|
-| ![Una página de demo simple](docs/screenshots/hero.png) | ![Un título editándose en el sitio](docs/screenshots/text-edit.png) | ![Un elemento seleccionado con tiradores y panel de propiedades](docs/screenshots/panel-select.png) |
+| ![Un portafolio corriendo en localhost](docs/screenshots/hero.png) | ![Un título editándose en el sitio](docs/screenshots/text-edit.png) | ![Un botón seleccionado, con tiradores y panel de tamaño, colores, tipografía, espaciado y su atributo href](docs/screenshots/panel-select.png) |
 
-Clic en cualquier elemento para seleccionarlo - aparecen tiradores en las esquinas (Shift+arrastre para trabar a un solo eje) y un panel con tamaño, color, tipografía y espaciado. Doble clic en un texto para editarlo en el sitio. Cada cambio se escribe directo en el archivo fuente real.
+Clic en cualquier elemento para seleccionarlo - aparecen tiradores en las esquinas (Shift+arrastre para trabar a un solo eje) y un panel con tamaño, color, tipografía, espaciado y los atributos editables del elemento. Doble clic en un texto para editarlo en el sitio. Cada cambio se escribe directo en el archivo fuente real.
 
 ## Cómo funciona
 

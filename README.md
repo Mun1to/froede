@@ -14,11 +14,11 @@ Point at an element on a live page or app, change it - text, size, color, typogr
 
 ## See it in action
 
-| Before | Editing text | Selected for style |
+| Before | Editing text | Selected: style + attributes |
 |---|---|---|
-| ![A plain demo page](docs/screenshots/hero.png) | ![A heading being edited in place](docs/screenshots/text-edit.png) | ![An element selected with resize handles and a property panel](docs/screenshots/panel-select.png) |
+| ![A portfolio page running on localhost](docs/screenshots/hero.png) | ![A heading being edited in place](docs/screenshots/text-edit.png) | ![A button selected, with resize handles and a panel showing size, colors, type, spacing and its href attribute](docs/screenshots/panel-select.png) |
 
-Click any element to select it - resize handles appear on its corners (Shift+drag to lock to one axis) and a panel shows size, color, typography and spacing. Double-click a text element to edit its content in place. Every change writes straight to the real source file.
+Click any element to select it - resize handles appear on its corners (Shift+drag to lock to one axis) and a panel shows size, color, typography, spacing and the element's editable attributes. Double-click a text element to edit its content in place. Every change writes straight to the real source file.
 
 ## How it works
 
