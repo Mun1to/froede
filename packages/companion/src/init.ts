@@ -1,6 +1,6 @@
 import { promises as fs } from "node:fs";
+import { spawnSync } from "node:child_process";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 import { ensureTokenIgnored } from "./token.js";
 
 const VITE_CONFIG_NAMES = [
@@ -10,21 +10,53 @@ const VITE_CONFIG_NAMES = [
   "vite.config.mjs",
 ];
 
-/** Absolute path to vite-plugin-froede's built entry, forward slashes. */
-function pluginDistPath(): string {
-  // dist/init.js -> ../../vite-plugin/dist/index.js
-  const here = path.dirname(fileURLToPath(import.meta.url));
-  return path
-    .resolve(here, "..", "..", "vite-plugin", "dist", "index.js")
-    .split(path.sep)
-    .join("/");
+// Keep this in sync with froede's own version (they release together).
+const PLUGIN_VERSION_RANGE = "^0.3.0";
+
+type PackageManager = "pnpm" | "npm" | "yarn" | "bun";
+
+async function detectPackageManager(root: string): Promise<PackageManager> {
+  const checks: [string, PackageManager][] = [
+    ["pnpm-lock.yaml", "pnpm"],
+    ["yarn.lock", "yarn"],
+    ["bun.lock", "bun"],
+    ["bun.lockb", "bun"],
+  ];
+  for (const [file, pm] of checks) {
+    try {
+      await fs.stat(path.join(root, file));
+      return pm;
+    } catch {
+      // keep looking
+    }
+  }
+  return "npm";
 }
 
 /**
- * One-step setup: wires vite-plugin-froede into the project's vite config
- * (when there is one) and gitignores the token. Conservative on purpose:
- * if the config doesn't look like something it can patch safely, it prints
- * the manual steps instead of guessing.
+ * Runs `<pm> add -D vite-plugin-froede`, showing real output. Returns
+ * success. Passed as a single command string (not an args array) so
+ * shell:true never triggers Node's DEP0190 warning about unescaped args -
+ * safe here since `pm` is a closed enum and the version is our own
+ * constant, never user input.
+ */
+function installPlugin(root: string, pm: PackageManager): boolean {
+  const pkg = `vite-plugin-froede@${PLUGIN_VERSION_RANGE}`;
+  const command = pm === "npm" ? `npm install --save-dev ${pkg}` : `${pm} add -D ${pkg}`;
+  const result = spawnSync(command, {
+    cwd: root,
+    stdio: "inherit",
+    shell: true,
+  });
+  return result.status === 0;
+}
+
+/**
+ * One-step setup: installs vite-plugin-froede (via the project's own package
+ * manager, detected from its lockfile) and wires it into the Vite config as
+ * the first plugin, then gitignores the token. Conservative on purpose: if
+ * the config doesn't look like something it can patch safely, or the install
+ * fails, it prints the manual steps instead of guessing.
  */
 export async function runInit(root: string): Promise<void> {
   const log = (line: string) => console.log(line);
@@ -48,18 +80,35 @@ export async function runInit(root: string): Promise<void> {
   } else {
     const abs = path.join(root, configFile);
     const source = await fs.readFile(abs, "utf8");
-    if (source.includes("froede")) {
+    if (source.includes("vite-plugin-froede")) {
       log(`  ${configFile}: froede is already configured, skipping.`);
     } else {
-      let rel = path
-        .relative(root, pluginDistPath().split("/").join(path.sep))
-        .split(path.sep)
-        .join("/");
-      if (!rel.startsWith(".")) rel = "./" + rel;
-      const importLine = `import froede from "${rel}";`;
+      let hasPackageJson = true;
+      try {
+        await fs.stat(path.join(root, "package.json"));
+      } catch {
+        hasPackageJson = false;
+      }
 
+      let installed = false;
+      if (hasPackageJson) {
+        const pm = await detectPackageManager(root);
+        log(`  Installing vite-plugin-froede with ${pm}...`);
+        installed = installPlugin(root, pm);
+        if (!installed) {
+          log(`  Could not run "${pm} add -D vite-plugin-froede" - install it yourself, then re-run "froede init".`);
+        }
+      } else {
+        log("  No package.json found - install vite-plugin-froede yourself, then re-run \"froede init\".");
+      }
+
+      const importLine = `import froede from "vite-plugin-froede";`;
       const pluginsPattern = /plugins\s*:\s*\[/;
-      if (!pluginsPattern.test(source)) {
+      if (!installed) {
+        log("  Add it by hand once installed (it must run BEFORE the react plugin):");
+        log(`    ${importLine}`);
+        log("    plugins: [froede(), react()]");
+      } else if (!pluginsPattern.test(source)) {
         log(`  ${configFile}: could not find a plugins: [...] array.`);
         log("  Add froede by hand (it must run BEFORE the react plugin):");
         log(`    ${importLine}`);
@@ -96,7 +145,7 @@ export async function runInit(root: string): Promise<void> {
   log(`  ${ignoreMsg}\n`);
 
   log("Next steps:");
-  log("  1. Run the companion here:  froede   (or: node <froede>/packages/companion/dist/cli.js)");
-  log("  2. Load the extension once: chrome://extensions -> Load unpacked -> packages/extension/dist");
+  log("  1. Run the companion here: froede   (prints a port and a pairing token)");
+  log("  2. Load the extension once: chrome://extensions -> Load unpacked -> the froede extension folder");
   log("  3. Open your localhost page, paste the port + token in the popup, toggle edit mode.");
 }

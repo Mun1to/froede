@@ -1,6 +1,6 @@
 {
   "name": "froede",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "front + edit + code. Click on your localhost page and the change lands in your real source files. This is the local companion + CLI.",
   "license": "MIT",
   "author": "Mun1to",

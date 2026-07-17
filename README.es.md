@@ -31,11 +31,21 @@ froede edita archivos de tu ordenador, así que esto importa: todo corre **en lo
 - **Los cambios de estilo son siempre inline y siempre scoped al elemento exacto** - nunca una regla de clase compartida, así que redimensionar una card nunca mueve a sus hermanas.
 - **Seguridad:** solo loopback, verificación de Origin (una página web nunca puede conectarse), token compartido (comparación en tiempo constante), y el companion físicamente no puede escribir fuera de la carpeta del proyecto donde arrancó. Cada edición verifica el valor actual antes de escribir y aborta si no coincide.
 
-## Quickstart (v0.3, desde el código)
+## Quickstart
 
-Guía completa en [`docs/INSTALAR.md`](docs/INSTALAR.md), incluido un prompt listo para pegarle a tu asistente de IA para que lo instale él. Resumen: `pnpm install && pnpm build`, cargar `packages/extension/dist` como extensión descomprimida, y en tu proyecto correr **`froede init`** (`node <froede>/packages/companion/dist/cli.js init`): detecta el vite.config, inyecta el plugin y protege el token en el `.gitignore` solo. Después arrancas el companion ahí mismo.
+```bash
+cd tu-proyecto
+npx froede init   # detecta tu vite.config, instala el plugin y lo cablea solo
+npx froede        # arranca el companion local; imprime un puerto y un token
+```
 
-v0.3 edita texto plano visible, tamaño/color/tipografía/espaciado inline, y un allowlist seguro de atributos (href/src rechazan URLs de tipo script) - todavía sin layout (mover/duplicar/borrar) ni animaciones. Pruébalo con `examples/static-site`, `examples/react-vite-app` o `examples/demo-site`. El deshacer es `git diff`.
+1. **Extensión (una vez por navegador):** [descarga el .zip de la última release](https://github.com/Mun1to/froede/releases/latest), descomprímelo, y `chrome://extensions` -> Modo desarrollador -> Cargar descomprimida -> la carpeta descomprimida. (Todavía no está en la Chrome Web Store.)
+2. Corre los dos comandos de arriba en el proyecto que quieras editar. Los proyectos HTML estáticos se saltan `init` - solo sirve la carpeta en localhost.
+3. Abre tu página en localhost, pega el puerto + token del companion en el popup de la extensión, activa "Toggle edit mode". Clic en un elemento para seleccionarlo (tiradores + panel de tamaño, color, tipografía, espaciado, atributos), doble clic en un texto para editarlo en el sitio. El archivo se guarda de verdad - tu deshacer es `git diff`.
+
+Guía completa, con un prompt listo para pegarle a tu asistente de IA: [`docs/INSTALAR.md`](docs/INSTALAR.md).
+
+v0.3 edita texto plano visible, tamaño/color/tipografía/espaciado inline, y un allowlist seguro de atributos (href/src rechazan URLs de tipo script) - todavía sin layout (mover/duplicar/borrar) ni animaciones.
 
 ## Panorama (a mediados de 2026)
 

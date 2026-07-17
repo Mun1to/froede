@@ -43,19 +43,19 @@ Browser (Chrome/Edge)                     Your machine
 - **Style edits are always inline and always scoped to the exact element** - never a shared class rule, so resizing one card never moves its siblings.
 - **Security:** loopback only, Origin check (web pages can never connect), shared token (constant-time compared), and the companion physically cannot write outside the project folder it was started in. Every edit verifies the current value first and aborts on mismatch.
 
-## Quickstart (v0.3, from source)
+## Quickstart
 
-```powershell
-git clone https://github.com/Mun1to/froede && cd froede
-pnpm install && pnpm build
+```bash
+cd your-project
+npx froede init   # detects your Vite config, installs the plugin, wires it up
+npx froede        # starts the local companion; prints a port and a pairing token
 ```
 
-1. **Extension:** `chrome://extensions` -> Developer mode -> Load unpacked -> `packages/extension/dist`.
-2. **Wire up your project (one command):** `cd` into it and run `node <froede>/packages/companion/dist/cli.js init` - it detects a Vite config, injects the plugin as the first entry, and gitignores the token. Static HTML projects need no config at all.
-3. **Companion:** in the same folder, `node <froede>/packages/companion/dist/cli.js`. It prints a port and token (a new one every restart) and keeps the token out of git for you.
-4. Open your localhost page, paste port + token in the extension popup, hit "Toggle edit mode". Click an element to select it (handles + property panel, including its attributes), double-click text to edit it. The file is saved for real - your undo is `git diff`.
+1. **Extension (once per browser):** [download the .zip from the latest release](https://github.com/Mun1to/froede/releases/latest), unzip it, then `chrome://extensions` -> Developer mode -> Load unpacked -> the unzipped folder. (Not on the Chrome Web Store yet.)
+2. Run the two commands above in the project you want to edit. Static HTML projects can skip `init` - just serve the folder on localhost.
+3. Open your localhost page, paste the port + token from the companion into the extension popup, hit "Toggle edit mode". Click an element to select it (resize handles + a property panel: size, color, typography, spacing, attributes), double-click text to edit it in place. The file is saved for real - your undo is `git diff`.
 
-Full walkthrough, including a ready-to-paste prompt for your AI coding session: [`docs/INSTALAR.md`](docs/INSTALAR.md) (Spanish). Try it on `examples/static-site`, `examples/react-vite-app` or `examples/demo-site`.
+Full walkthrough, including a ready-to-paste prompt for your AI coding session: [`docs/INSTALAR.md`](docs/INSTALAR.md) (Spanish).
 
 v0.3 edits plain visible text, inline size/color/typography/spacing, and a safe allowlist of attributes (href/src reject script-scheme URLs) - no layout (move/duplicate/delete) or animations yet.
 
