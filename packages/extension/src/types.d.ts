@@ -10,6 +10,18 @@ type FroedeEditTarget =
   | { kind: "react"; file: string; line: number; column: number }
   | { kind: "static-html"; urlPath: string; domPath: number[] };
 
+/** Mirrors packages/protocol StyleEdits - keep the key set in sync by hand. */
+type FroedeStyleEdits = Partial<{
+  width: string;
+  height: string;
+  color: string;
+  backgroundColor: string;
+  fontSize: string;
+  fontWeight: string;
+  padding: string;
+  margin: string;
+}>;
+
 /** content/popup -> background */
 type FroedeRuntimeMessage =
   | {
@@ -17,6 +29,12 @@ type FroedeRuntimeMessage =
       target: FroedeEditTarget;
       previousText: string;
       newText: string;
+    }
+  | {
+      kind: "froede-write-style";
+      target: FroedeEditTarget;
+      previousStyle: FroedeStyleEdits;
+      style: FroedeStyleEdits;
     }
   | { kind: "froede-test" }
   | { kind: "froede-toggle-tab" };

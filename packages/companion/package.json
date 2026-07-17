@@ -20,6 +20,7 @@
   "dependencies": {
     "@babel/parser": "^7.26.0",
     "@froede/protocol": "workspace:*",
+    "magic-string": "^0.30.0",
     "parse5": "^7.2.0",
     "ws": "^8.18.0",
     "zod": "^3.25.0"

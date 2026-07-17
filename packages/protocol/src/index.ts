@@ -54,9 +54,54 @@ export const WriteTextRequest = z.object({
 });
 export type WriteTextRequest = z.infer<typeof WriteTextRequest>;
 
+/**
+ * Allowed style properties for v0.2, each with a strict value format.
+ * This is deliberately an allowlist, not free-form CSS: values get spliced
+ * straight into source files (a JS string literal for React, a style="..."
+ * attribute for HTML), so a tight regex per property is what keeps that
+ * splice injection-safe without needing contextual escaping. Keys are
+ * always camelCase (JS style) on the wire; the static-html target converts
+ * to kebab-case CSS itself.
+ */
+const PX_OR_PERCENT = /^\d+(\.\d+)?(px|%)$/;
+const PX_ONLY = /^\d+(\.\d+)?px$/;
+const HEX_COLOR = /^#[0-9a-f]{6}$/i;
+const FONT_WEIGHT = /^(normal|bold|[1-9]00)$/;
+
+export const StyleEdits = z
+  .object({
+    width: z.string().regex(PX_OR_PERCENT).optional(),
+    height: z.string().regex(PX_OR_PERCENT).optional(),
+    color: z.string().regex(HEX_COLOR).optional(),
+    backgroundColor: z.string().regex(HEX_COLOR).optional(),
+    fontSize: z.string().regex(PX_ONLY).optional(),
+    fontWeight: z.string().regex(FONT_WEIGHT).optional(),
+    padding: z.string().regex(PX_ONLY).optional(),
+    margin: z.string().regex(PX_ONLY).optional(),
+  })
+  .strict()
+  .refine((obj) => Object.keys(obj).length > 0, "at least one style property required");
+export type StyleEdits = z.infer<typeof StyleEdits>;
+
+export const WriteStyleRequest = z.object({
+  type: z.literal("write-style"),
+  requestId: z.string().min(1).max(100),
+  target: EditTarget,
+  /**
+   * What the client believes each edited property is currently set to
+   * inline right now (omit a key, or use "", when it believes the
+   * property is not set yet). Same drift-guard as previousText, checked
+   * per key before any write happens.
+   */
+  previousStyle: z.record(z.string(), z.string()).optional(),
+  style: StyleEdits,
+});
+export type WriteStyleRequest = z.infer<typeof WriteStyleRequest>;
+
 export const ClientMessage = z.discriminatedUnion("type", [
   PingRequest,
   WriteTextRequest,
+  WriteStyleRequest,
 ]);
 export type ClientMessage = z.infer<typeof ClientMessage>;
 

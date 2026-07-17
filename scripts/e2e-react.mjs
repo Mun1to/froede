@@ -1,6 +1,6 @@
 // End-to-end check for the react target: spawns the real companion against
-// examples/react-vite-app, edits the <h1> text in App.tsx at its real
-// source location, verifies the file, then restores it.
+// examples/react-vite-app, edits the <h1> text and style in App.tsx at its
+// real source location, verifies the file, then restores it.
 import { spawn } from "node:child_process";
 import { readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
@@ -23,12 +23,20 @@ const original = readFileSync(targetFile, "utf8");
 writeFileSync(path.join(exampleDir, ".froede-token"), TOKEN + "\n");
 
 // Locate <h1> the same way @babel/parser reports it: 1-based line,
-// 0-based column of the element's `<`.
+// 0-based column of the element's `<`. Read its CURRENT text instead of
+// hardcoding it, so this script keeps working whatever App.tsx currently
+// says (e.g. after someone edited the example into a portfolio page).
 const idx = original.indexOf("<h1>");
 if (idx < 0) {
-  console.error("FAIL (react): fixture does not contain <h1>");
+  console.error("FAIL (react): fixture does not contain a plain <h1>text</h1>");
   process.exit(1);
 }
+const h1Match = original.slice(idx).match(/^<h1>([^<{]*)<\/h1>/);
+if (!h1Match) {
+  console.error("FAIL (react): <h1> is not a plain-text leaf");
+  process.exit(1);
+}
+const originalH1Text = h1Match[1];
 const before = original.slice(0, idx);
 const line = before.split("\n").length;
 const column = idx - (before.lastIndexOf("\n") + 1);
@@ -62,56 +70,50 @@ await new Promise((resolve, reject) => {
   ws.onerror = () => reject(new Error("could not connect"));
 }).catch((err) => fail(err.message));
 
+function send(payload) {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error("no response: " + payload.type)), 8000);
+    ws.onmessage = (event) => {
+      clearTimeout(timer);
+      resolve(JSON.parse(String(event.data)));
+    };
+    ws.send(JSON.stringify(payload));
+  });
+}
+
 // Ping handshake first.
-const pong = await new Promise((resolve, reject) => {
-  const timer = setTimeout(() => reject(new Error("no pong")), 8000);
-  ws.onmessage = (event) => {
-    clearTimeout(timer);
-    resolve(JSON.parse(String(event.data)));
-  };
-  ws.send(JSON.stringify({ type: "ping", requestId: "e2e-0", protocolVersion: 1 }));
-}).catch((err) => fail(err.message));
+const pong = await send({ type: "ping", requestId: "e2e-0", protocolVersion: 1 }).catch((err) =>
+  fail(err.message),
+);
 if (pong.type !== "pong" || pong.protocolVersion !== 1) {
   fail("bad pong: " + JSON.stringify(pong));
 }
 
+// --- text edit -------------------------------------------------------------
+
 const NEW_TEXT = "Edited by froede e2e";
-const response = await new Promise((resolve, reject) => {
-  const timer = setTimeout(() => reject(new Error("no write-result")), 8000);
-  ws.onmessage = (event) => {
-    clearTimeout(timer);
-    resolve(JSON.parse(String(event.data)));
-  };
-  ws.send(
-    JSON.stringify({
-      type: "write-text",
-      requestId: "e2e-1",
-      target: { kind: "react", file: "src/App.tsx", line, column },
-      previousText: "Hola froede",
-      newText: NEW_TEXT,
-    }),
-  );
+const response = await send({
+  type: "write-text",
+  requestId: "e2e-1",
+  target: { kind: "react", file: "src/App.tsx", line, column },
+  previousText: originalH1Text,
+  newText: NEW_TEXT,
 }).catch((err) => fail(err.message));
 
 if (!response.ok) fail("companion returned error: " + response.error);
 
-const written = readFileSync(targetFile, "utf8");
+let written = readFileSync(targetFile, "utf8");
 if (!written.includes(`<h1>${NEW_TEXT}</h1>`)) {
   fail("new text not found in App.tsx: " + written.match(/<h1>.*<\/h1>/)?.[0]);
 }
 
 // Mismatch check: stale previousText must be rejected, file untouched.
-const resp2 = await new Promise((resolve) => {
-  ws.onmessage = (event) => resolve(JSON.parse(String(event.data)));
-  ws.send(
-    JSON.stringify({
-      type: "write-text",
-      requestId: "e2e-2",
-      target: { kind: "react", file: "src/App.tsx", line, column },
-      previousText: "Hola froede",
-      newText: "should never land",
-    }),
-  );
+const resp2 = await send({
+  type: "write-text",
+  requestId: "e2e-2",
+  target: { kind: "react", file: "src/App.tsx", line, column },
+  previousText: originalH1Text, // stale - current text is now NEW_TEXT
+  newText: "should never land",
 });
 if (resp2.ok) fail("stale previousText was NOT rejected");
 if (readFileSync(targetFile, "utf8").includes("should never land")) {
@@ -119,25 +121,65 @@ if (readFileSync(targetFile, "utf8").includes("should never land")) {
 }
 
 // JSX-sensitive characters must be wrapped as an expression.
-const resp3 = await new Promise((resolve) => {
-  ws.onmessage = (event) => resolve(JSON.parse(String(event.data)));
-  ws.send(
-    JSON.stringify({
-      type: "write-text",
-      requestId: "e2e-3",
-      target: { kind: "react", file: "src/App.tsx", line, column },
-      previousText: NEW_TEXT,
-      newText: "a < b { c }",
-    }),
-  );
+const resp3 = await send({
+  type: "write-text",
+  requestId: "e2e-3",
+  target: { kind: "react", file: "src/App.tsx", line, column },
+  previousText: NEW_TEXT,
+  newText: "a < b { c }",
 });
 if (!resp3.ok) fail("jsx-escaping edit failed: " + resp3.error);
-const written3 = readFileSync(targetFile, "utf8");
-if (!written3.includes(`<h1>{"a < b { c }"}</h1>`)) {
-  fail("JSX special characters were not wrapped: " + written3.match(/<h1>.*<\/h1>/)?.[0]);
+written = readFileSync(targetFile, "utf8");
+if (!written.includes(`<h1>{"a < b { c }"}</h1>`)) {
+  fail("JSX special characters were not wrapped: " + written.match(/<h1>.*<\/h1>/)?.[0]);
+}
+
+// --- style edit: h1 has no style attribute yet, so this must INSERT one ----
+
+const resp4 = await send({
+  type: "write-style",
+  requestId: "e2e-4",
+  target: { kind: "react", file: "src/App.tsx", line, column },
+  previousStyle: { width: "" },
+  style: { width: "300px" },
+});
+if (!resp4.ok) fail("style insert failed: " + resp4.error);
+written = readFileSync(targetFile, "utf8");
+if (!written.includes(`<h1 style={{ width: "300px" }}>`)) {
+  fail("style attribute not inserted correctly: " + written.match(/<h1[^>]*>/)?.[0]);
+}
+
+// A second edit must PATCH the existing object (update width, add color),
+// preserving the property already there.
+const resp5 = await send({
+  type: "write-style",
+  requestId: "e2e-5",
+  target: { kind: "react", file: "src/App.tsx", line, column },
+  previousStyle: { width: "300px", color: "" },
+  style: { width: "320px", color: "#ff0000" },
+});
+if (!resp5.ok) fail("style patch failed: " + resp5.error);
+written = readFileSync(targetFile, "utf8");
+if (!written.includes(`width: "320px"`) || !written.includes(`color: "#ff0000"`)) {
+  fail("style object not patched correctly: " + written.match(/<h1[^>]*>/)?.[0]);
+}
+
+// Mismatch check for style: stale previousStyle must be rejected.
+const resp6 = await send({
+  type: "write-style",
+  requestId: "e2e-6",
+  target: { kind: "react", file: "src/App.tsx", line, column },
+  previousStyle: { width: "300px" }, // stale - actual current width is 320px
+  style: { width: "999px" },
+});
+if (resp6.ok) fail("stale previousStyle was NOT rejected");
+if (readFileSync(targetFile, "utf8").includes("999px")) {
+  fail("file was written despite the style mismatch");
 }
 
 ws.close();
 child.kill();
 writeFileSync(targetFile, original);
-console.log("PASS (react): ping + edit + mismatch reject + jsx escaping");
+console.log(
+  "PASS (react): ping + text edit + mismatch reject + jsx escaping + style insert + style patch + style mismatch reject",
+);

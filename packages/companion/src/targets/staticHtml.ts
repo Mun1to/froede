@@ -1,16 +1,26 @@
 import { promises as fs } from "node:fs";
-import path from "node:path";
 import { parse } from "parse5";
 import { FroedeError } from "../errors.js";
 import { resolveInsideRoot } from "../fsGuard.js";
-import { escapeHtmlText, normalizeText, spliceKeepingPadding } from "../text.js";
+import { escapeHtmlAttr, escapeHtmlText, normalizeText, spliceKeepingPadding } from "../text.js";
+import { parseStyleAttr, serializeStyleAttr } from "../styleAttr.js";
+
+interface AttrLocation {
+  startOffset: number;
+  endOffset: number;
+}
 
 interface Parse5Node {
   nodeName: string;
   tagName?: string;
   value?: string;
+  attrs?: { name: string; value: string }[];
   childNodes?: Parse5Node[];
-  sourceCodeLocation?: { startOffset: number; endOffset: number } | null;
+  sourceCodeLocation?: {
+    startOffset: number;
+    endOffset: number;
+    startTag?: { startOffset: number; endOffset: number; attrs?: Record<string, AttrLocation> };
+  } | null;
 }
 
 function isElement(node: Parse5Node): boolean {
@@ -34,27 +44,30 @@ export function urlPathToFile(urlPath: string): string {
   return rel;
 }
 
-export async function applyStaticTextEdit(options: {
-  root: string;
-  urlPath: string;
-  domPath: number[];
-  previousText: string;
-  newText: string;
-}): Promise<{ file: string }> {
-  const relFile = urlPathToFile(options.urlPath);
-  const absFile = await resolveInsideRoot(options.root, relFile);
+interface LocatedStaticElement {
+  absFile: string;
+  relFile: string;
+  source: string;
+  node: Parse5Node;
+}
+
+async function locateStaticElement(
+  root: string,
+  urlPath: string,
+  domPath: number[],
+): Promise<LocatedStaticElement> {
+  const relFile = urlPathToFile(urlPath);
+  const absFile = await resolveInsideRoot(root, relFile);
   const source = await fs.readFile(absFile, "utf8");
 
   const document = parse(source, { sourceCodeLocationInfo: true }) as unknown as Parse5Node;
-  const htmlEl = (document.childNodes ?? []).find(
-    (n) => n.tagName === "html",
-  );
+  const htmlEl = (document.childNodes ?? []).find((n) => n.tagName === "html");
   if (!htmlEl) throw new FroedeError("could not parse the HTML document");
 
   // parse5 builds the tree with the same WHATWG algorithm as the browser,
   // so walking the same element-only child indices lands on the same node.
   let node = htmlEl;
-  for (const index of options.domPath) {
+  for (const index of domPath) {
     const children = elementChildren(node);
     const next = children[index];
     if (!next) {
@@ -64,6 +77,21 @@ export async function applyStaticTextEdit(options: {
     }
     node = next;
   }
+  return { absFile, relFile, source, node };
+}
+
+export async function applyStaticTextEdit(options: {
+  root: string;
+  urlPath: string;
+  domPath: number[];
+  previousText: string;
+  newText: string;
+}): Promise<{ file: string }> {
+  const { absFile, relFile, source, node } = await locateStaticElement(
+    options.root,
+    options.urlPath,
+    options.domPath,
+  );
 
   if (elementChildren(node).length > 0) {
     throw new FroedeError("element is not a simple text element");
@@ -91,5 +119,57 @@ export async function applyStaticTextEdit(options: {
     escapeHtmlText(options.newText),
   );
   await fs.writeFile(absFile, updated, "utf8");
-  return { file: path.relative(options.root, absFile).split(path.sep).join("/") };
+  return { file: relFile };
+}
+
+/** Where to splice in a brand new style="..." attribute on the opening tag. */
+function insertNewAttr(source: string, startTag: NonNullable<Parse5Node["sourceCodeLocation"]>["startTag"], attrText: string): string {
+  const attrLocs = Object.values(startTag?.attrs ?? {});
+  if (attrLocs.length > 0) {
+    const insertAt = Math.min(...attrLocs.map((a) => a.startOffset));
+    return source.slice(0, insertAt) + attrText + " " + source.slice(insertAt);
+  }
+  // No existing attributes: insert right before the tag's closing `>`.
+  const insertAt = (startTag?.endOffset ?? source.length) - 1;
+  return source.slice(0, insertAt) + " " + attrText + source.slice(insertAt);
+}
+
+export async function applyStaticStyleEdit(options: {
+  root: string;
+  urlPath: string;
+  domPath: number[];
+  previousStyle?: Record<string, string>;
+  style: Record<string, string>;
+}): Promise<{ file: string }> {
+  const { absFile, relFile, source, node } = await locateStaticElement(
+    options.root,
+    options.urlPath,
+    options.domPath,
+  );
+  const startTag = node.sourceCodeLocation?.startTag;
+  if (!startTag) throw new FroedeError("element has no source location");
+
+  const styleAttrLoc = startTag.attrs?.style;
+  const existing = styleAttrLoc
+    ? parseStyleAttr((node.attrs ?? []).find((a) => a.name === "style")?.value ?? "")
+    : {};
+
+  for (const key of Object.keys(options.style)) {
+    const expected = options.previousStyle?.[key] ?? "";
+    if ((existing[key] ?? "") !== expected) {
+      throw new FroedeError(
+        "style mismatch - the source file changed underneath, reload the page and retry",
+      );
+    }
+  }
+
+  const merged = { ...existing, ...options.style };
+  const attrText = `style="${escapeHtmlAttr(serializeStyleAttr(merged))}"`;
+
+  const updated = styleAttrLoc
+    ? source.slice(0, styleAttrLoc.startOffset) + attrText + source.slice(styleAttrLoc.endOffset)
+    : insertNewAttr(source, startTag, attrText);
+
+  await fs.writeFile(absFile, updated, "utf8");
+  return { file: relFile };
 }

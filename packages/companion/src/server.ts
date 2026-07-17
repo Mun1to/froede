@@ -6,8 +6,8 @@ import {
   type ServerMessage,
 } from "@froede/protocol";
 import { publicErrorMessage } from "./errors.js";
-import { applyReactTextEdit } from "./targets/reactSource.js";
-import { applyStaticTextEdit } from "./targets/staticHtml.js";
+import { applyReactStyleEdit, applyReactTextEdit } from "./targets/reactSource.js";
+import { applyStaticStyleEdit, applyStaticTextEdit } from "./targets/staticHtml.js";
 import { tokensMatch } from "./token.js";
 
 export const COMPANION_VERSION = "0.1.0";
@@ -93,23 +93,44 @@ export async function startServer(options: {
       }
 
       const { target } = msg;
-      const result =
-        target.kind === "react"
-          ? await applyReactTextEdit({
-              root: options.root,
-              file: target.file,
-              line: target.line,
-              column: target.column,
-              previousText: msg.previousText,
-              newText: msg.newText,
-            })
-          : await applyStaticTextEdit({
-              root: options.root,
-              urlPath: target.urlPath,
-              domPath: target.domPath,
-              previousText: msg.previousText,
-              newText: msg.newText,
-            });
+      let result: { file: string };
+      if (msg.type === "write-text") {
+        result =
+          target.kind === "react"
+            ? await applyReactTextEdit({
+                root: options.root,
+                file: target.file,
+                line: target.line,
+                column: target.column,
+                previousText: msg.previousText,
+                newText: msg.newText,
+              })
+            : await applyStaticTextEdit({
+                root: options.root,
+                urlPath: target.urlPath,
+                domPath: target.domPath,
+                previousText: msg.previousText,
+                newText: msg.newText,
+              });
+      } else {
+        result =
+          target.kind === "react"
+            ? await applyReactStyleEdit({
+                root: options.root,
+                file: target.file,
+                line: target.line,
+                column: target.column,
+                previousStyle: msg.previousStyle,
+                style: msg.style,
+              })
+            : await applyStaticStyleEdit({
+                root: options.root,
+                urlPath: target.urlPath,
+                domPath: target.domPath,
+                previousStyle: msg.previousStyle,
+                style: msg.style,
+              });
+      }
 
       log(`wrote ${result.file}`);
       send(ws, { type: "write-result", requestId, ok: true, file: result.file });

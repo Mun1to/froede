@@ -7,6 +7,11 @@ export function escapeHtmlText(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
+/** For values placed inside a double-quoted HTML attribute. */
+export function escapeHtmlAttr(s: string): string {
+  return s.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
+}
+
 /**
  * Replaces [start, end) of `source` with `replacement`, preserving the
  * original leading/trailing whitespace of the replaced range (indentation,

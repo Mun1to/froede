@@ -1,9 +1,10 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { parse } from "@babel/parser";
+import MagicString from "magic-string";
 import { FroedeError } from "../errors.js";
 import { resolveInsideRoot } from "../fsGuard.js";
-import { normalizeText, spliceKeepingPadding } from "../text.js";
+import { normalizeText } from "../text.js";
 
 interface AstNode {
   type: string;
@@ -43,6 +44,60 @@ function toJsxText(s: string): string {
   return s;
 }
 
+interface ParsedReactFile {
+  root: string;
+  absFile: string;
+  relFile: string;
+  source: string;
+  ast: AstNode;
+}
+
+async function parseProjectFile(root: string, file: string): Promise<ParsedReactFile> {
+  if (!/\.[jt]sx?$/.test(file)) {
+    throw new FroedeError("react target only supports .js/.jsx/.ts/.tsx files");
+  }
+  const absFile = await resolveInsideRoot(root, file);
+  const source = await fs.readFile(absFile, "utf8");
+  let ast: AstNode;
+  try {
+    ast = parse(source, {
+      sourceType: "module",
+      plugins: babelPluginsFor(file),
+    }) as unknown as AstNode;
+  } catch {
+    throw new FroedeError("could not parse the source file");
+  }
+  return { root, absFile, relFile: file, source, ast };
+}
+
+/**
+ * The vite plugin stamps an element's own start position (the `<`), taken
+ * from the same parser, so an exact line/column match is expected.
+ */
+function findElementAt(ast: AstNode, line: number, column: number): AstNode {
+  for (const node of walk(ast)) {
+    if (
+      node.type === "JSXElement" &&
+      node.loc?.start.line === line &&
+      node.loc?.start.column === column
+    ) {
+      return node;
+    }
+  }
+  throw new FroedeError(
+    "target element not found - the source file changed underneath, reload the page and retry",
+  );
+}
+
+async function writeResult(
+  root: string,
+  absFile: string,
+  updated: string,
+): Promise<{ file: string }> {
+  await fs.writeFile(absFile, updated, "utf8");
+  return { file: path.relative(root, absFile).split(path.sep).join("/") };
+}
+
 export async function applyReactTextEdit(options: {
   root: string;
   file: string;
@@ -51,40 +106,8 @@ export async function applyReactTextEdit(options: {
   previousText: string;
   newText: string;
 }): Promise<{ file: string }> {
-  if (!/\.[jt]sx?$/.test(options.file)) {
-    throw new FroedeError("react target only supports .js/.jsx/.ts/.tsx files");
-  }
-  const absFile = await resolveInsideRoot(options.root, options.file);
-  const source = await fs.readFile(absFile, "utf8");
-
-  let ast: AstNode;
-  try {
-    ast = parse(source, {
-      sourceType: "module",
-      plugins: babelPluginsFor(options.file),
-    }) as unknown as AstNode;
-  } catch {
-    throw new FroedeError("could not parse the source file");
-  }
-
-  // The vite plugin stamped the element's own start position (the `<`),
-  // taken from the same parser, so an exact line/column match is expected.
-  let element: AstNode | undefined;
-  for (const node of walk(ast)) {
-    if (
-      node.type === "JSXElement" &&
-      node.loc?.start.line === options.line &&
-      node.loc?.start.column === options.column
-    ) {
-      element = node;
-      break;
-    }
-  }
-  if (!element) {
-    throw new FroedeError(
-      "target element not found - the source file changed underneath, reload the page and retry",
-    );
-  }
+  const { absFile, source, ast } = await parseProjectFile(options.root, options.file);
+  const element = findElementAt(ast, options.line, options.column);
 
   const children = (element.children as AstNode[] | undefined) ?? [];
   const meaningful = children.filter(
@@ -106,12 +129,104 @@ export async function applyReactTextEdit(options: {
     );
   }
 
-  const updated = spliceKeepingPadding(
-    source,
-    textNode.start,
-    textNode.end,
-    toJsxText(options.newText.trim()),
+  const s = new MagicString(source);
+  s.overwrite(textNode.start, textNode.end, toJsxText(options.newText.trim()));
+  return writeResult(options.root, absFile, s.toString());
+}
+
+/** Reads an ObjectProperty's key name, whether it's an Identifier or a StringLiteral key. */
+function propertyKeyName(prop: AstNode): string | undefined {
+  const key = prop.key as AstNode | undefined;
+  if (!key) return undefined;
+  if (typeof key.name === "string") return key.name;
+  if (typeof key.value === "string") return key.value;
+  return undefined;
+}
+
+export async function applyReactStyleEdit(options: {
+  root: string;
+  file: string;
+  line: number;
+  column: number;
+  previousStyle?: Record<string, string>;
+  style: Record<string, string>;
+}): Promise<{ file: string }> {
+  const { absFile, source, ast } = await parseProjectFile(options.root, options.file);
+  const element = findElementAt(ast, options.line, options.column);
+  const opening = element.openingElement as AstNode;
+  const attrs = (opening.attributes as AstNode[] | undefined) ?? [];
+  const styleAttr = attrs.find(
+    (a) => a.type === "JSXAttribute" && (a.name as AstNode | undefined)?.name === "style",
   );
-  await fs.writeFile(absFile, updated, "utf8");
-  return { file: path.relative(options.root, absFile).split(path.sep).join("/") };
+
+  let objectExpr: AstNode | undefined;
+  let existingProps: AstNode[] = [];
+  if (styleAttr) {
+    const value = styleAttr.value as AstNode | null | undefined;
+    const expr =
+      value?.type === "JSXExpressionContainer" ? (value.expression as AstNode) : undefined;
+    if (!expr || expr.type !== "ObjectExpression") {
+      throw new FroedeError(
+        "style attribute is not a plain object literal - edit it by hand for now",
+      );
+    }
+    objectExpr = expr;
+    existingProps = (expr.properties as AstNode[] | undefined) ?? [];
+  }
+
+  function findProp(key: string): AstNode | undefined {
+    return existingProps.find((p) => propertyKeyName(p) === key);
+  }
+
+  function currentValueOf(key: string): string {
+    const prop = findProp(key);
+    if (!prop) return "";
+    const val = prop.value as AstNode;
+    if (val.type !== "StringLiteral" || typeof val.value !== "string") {
+      throw new FroedeError(`style.${key} is not a plain string literal - edit it by hand for now`);
+    }
+    return val.value;
+  }
+
+  // Verify every key before writing anything (all-or-nothing).
+  for (const key of Object.keys(options.style)) {
+    const expected = options.previousStyle?.[key] ?? "";
+    if (currentValueOf(key) !== expected) {
+      throw new FroedeError(
+        "style mismatch - the source file changed underneath, reload the page and retry",
+      );
+    }
+  }
+
+  const s = new MagicString(source);
+  const toInsert: string[] = [];
+  for (const [key, val] of Object.entries(options.style)) {
+    const prop = findProp(key);
+    if (prop) {
+      const valNode = prop.value as AstNode;
+      s.overwrite(valNode.start as number, valNode.end as number, JSON.stringify(val));
+    } else {
+      toInsert.push(`${key}: ${JSON.stringify(val)}`);
+    }
+  }
+
+  if (toInsert.length > 0) {
+    if (objectExpr) {
+      // Insert right after the last existing property's own end (not right
+      // before the closing `}`) so any padding the user/previous edit left
+      // before `}` stays trailing instead of getting sandwiched by commas.
+      const lastProp = existingProps[existingProps.length - 1];
+      const insertAt =
+        lastProp && typeof lastProp.end === "number"
+          ? lastProp.end
+          : (objectExpr.start as number) + 1;
+      const prefix = existingProps.length > 0 ? ", " : "";
+      s.appendLeft(insertAt, prefix + toInsert.join(", "));
+    } else {
+      const nameEnd = (opening.name as AstNode).end as number;
+      s.appendLeft(nameEnd, ` style={{ ${toInsert.join(", ")} }}`);
+    }
+  }
+
+  return writeResult(options.root, absFile, s.toString());
 }

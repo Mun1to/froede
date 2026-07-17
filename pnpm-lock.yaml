@@ -26,6 +26,9 @@ importers:
       '@froede/protocol':
         specifier: workspace:*
         version: link:../protocol
+      magic-string:
+        specifier: ^0.30.0
+        version: 0.30.21
       parse5:
         specifier: ^7.2.0
         version: 7.3.0
