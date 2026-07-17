@@ -173,3 +173,38 @@ export async function applyStaticStyleEdit(options: {
   await fs.writeFile(absFile, updated, "utf8");
   return { file: relFile };
 }
+
+export async function applyStaticAttrEdit(options: {
+  root: string;
+  urlPath: string;
+  domPath: number[];
+  name: string;
+  previousValue: string;
+  newValue: string;
+}): Promise<{ file: string }> {
+  const { absFile, relFile, source, node } = await locateStaticElement(
+    options.root,
+    options.urlPath,
+    options.domPath,
+  );
+  const startTag = node.sourceCodeLocation?.startTag;
+  if (!startTag) throw new FroedeError("element has no source location");
+
+  const attrLoc = startTag.attrs?.[options.name];
+  // parse5 decodes entities in attr values, matching el.getAttribute() in
+  // the browser, so this comparison is apples to apples.
+  const current = (node.attrs ?? []).find((a) => a.name === options.name)?.value ?? "";
+  if (current !== options.previousValue) {
+    throw new FroedeError(
+      "attribute mismatch - the source file changed underneath, reload the page and retry",
+    );
+  }
+
+  const attrText = `${options.name}="${escapeHtmlAttr(options.newValue)}"`;
+  const updated = attrLoc
+    ? source.slice(0, attrLoc.startOffset) + attrText + source.slice(attrLoc.endOffset)
+    : insertNewAttr(source, startTag, attrText);
+
+  await fs.writeFile(absFile, updated, "utf8");
+  return { file: relFile };
+}

@@ -1,6 +1,12 @@
-# Instalar froede en tu proyecto (v0.2, sin publicar en npm todavía)
+# Instalar froede en tu proyecto (v0.3, sin publicar en npm todavía)
 
 Tres piezas: la **extensión** (una vez por navegador), el **companion** (uno por proyecto, corriendo) y, si el proyecto es React/Vite, el **plugin de Vite**.
+
+> **Atajo: `froede init`.** Los pasos 2 y 3 de abajo se hacen solos con un comando (con el cwd en la raíz de tu proyecto):
+> ```powershell
+> node C:\proyectos\froede\packages\companion\dist\cli.js init
+> ```
+> Detecta el `vite.config.*`, inyecta `froede()` como primer plugin, y añade `.froede-token` al `.gitignore`. Si no hay vite config, te dice cómo servir el proyecto estático. Luego solo queda arrancar el companion (paso 2) y usar la extensión.
 
 ## 1. Cargar la extensión (una sola vez, y cada vez que froede se recompile)
 
@@ -48,8 +54,7 @@ export default defineConfig({
 
 ## Prompt listo para pegar en la sesión de IA de tu proyecto
 
-> Instala froede en este proyecto para poder editarlo visualmente desde el navegador (texto, tamaño, color, tipografía, espaciado - clic para seleccionar, doble clic para editar texto). froede vive en `C:\proyectos\froede` (monorepo pnpm ya compilado). Haz esto:
-> 1. Si este proyecto usa Vite+React: en `vite.config.ts` importa el plugin con `import froede from "<ruta relativa desde este proyecto a C:/proyectos/froede/packages/vite-plugin/dist/index.js>"` y añade `froede()` como PRIMER plugin del array, antes de `react()`. Reinicia el dev server.
-> 2. Arranca el companion en una terminal aparte con el cwd en la RAÍZ de este proyecto: `node C:\proyectos\froede\packages\companion\dist\cli.js`. Déjalo corriendo y dime el puerto y el token que imprime (recuerda: el token cambia cada reinicio).
-> 3. Añade `.froede-token` al `.gitignore` de este proyecto.
-> 4. No toques nada más; froede no necesita más configuración.
+> Instala froede en este proyecto para poder editarlo visualmente desde el navegador (texto, tamaño, color, tipografía, espaciado y atributos - clic para seleccionar, doble clic para editar texto). froede vive en `C:\proyectos\froede` (monorepo pnpm ya compilado). Haz esto:
+> 1. Con el cwd en la RAÍZ de este proyecto, corre `node C:\proyectos\froede\packages\companion\dist\cli.js init` - configura el plugin de Vite (si aplica) y el `.gitignore` solo. Si tocó el `vite.config`, reinicia el dev server.
+> 2. Arranca el companion en una terminal aparte, también desde la raíz: `node C:\proyectos\froede\packages\companion\dist\cli.js`. Déjalo corriendo y dime el puerto y el token que imprime (el token cambia cada reinicio).
+> 3. No toques nada más; froede no necesita más configuración. Las ediciones que haga con froede aparecerán como cambios en los archivos fuente (estilos inline, textos, atributos): son intencionales, no las reviertas.

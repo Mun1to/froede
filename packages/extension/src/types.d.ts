@@ -22,6 +22,9 @@ type FroedeStyleEdits = Partial<{
   margin: string;
 }>;
 
+/** Mirrors packages/protocol ATTR_NAMES - keep in sync by hand. */
+type FroedeAttrName = "alt" | "href" | "placeholder" | "src" | "title";
+
 /** content/popup -> background */
 type FroedeRuntimeMessage =
   | {
@@ -35,6 +38,13 @@ type FroedeRuntimeMessage =
       target: FroedeEditTarget;
       previousStyle: FroedeStyleEdits;
       style: FroedeStyleEdits;
+    }
+  | {
+      kind: "froede-write-attr";
+      target: FroedeEditTarget;
+      name: FroedeAttrName;
+      previousValue: string;
+      newValue: string;
     }
   | { kind: "froede-test" }
   | { kind: "froede-toggle-tab" };

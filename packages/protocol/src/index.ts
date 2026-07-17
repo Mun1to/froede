@@ -107,11 +107,51 @@ export const WriteStyleRequest = z.object({
 });
 export type WriteStyleRequest = z.infer<typeof WriteStyleRequest>;
 
-export const ClientMessage = z.discriminatedUnion("type", [
-  PingRequest,
-  WriteTextRequest,
-  WriteStyleRequest,
-]);
+/**
+ * Editable attributes, an allowlist just like StyleEdits. Values are
+ * free text (they get entity-escaped before splicing), but URL-bearing
+ * attributes reject script-ish schemes: the user is editing their own
+ * site, but froede must never be the vehicle that writes an XSS vector
+ * into a source file.
+ */
+export const ATTR_NAMES = ["alt", "href", "placeholder", "src", "title"] as const;
+export const AttrName = z.enum(ATTR_NAMES);
+export type AttrName = z.infer<typeof AttrName>;
+
+const FORBIDDEN_URL_SCHEME = /^\s*(javascript|vbscript|data)\s*:/i;
+
+// Plain object (no .refine) because zod's discriminatedUnion only accepts
+// bare ZodObjects; the scheme check lives on ClientMessage below.
+export const WriteAttrRequest = z.object({
+  type: z.literal("write-attr"),
+  requestId: z.string().min(1).max(100),
+  target: EditTarget,
+  name: AttrName,
+  /** Current value as the client sees it ("" when the attribute is absent). */
+  previousValue: z.string().max(10_000),
+  newValue: z.string().max(10_000),
+});
+export type WriteAttrRequest = z.infer<typeof WriteAttrRequest>;
+
+export const ClientMessage = z
+  .discriminatedUnion("type", [
+    PingRequest,
+    WriteTextRequest,
+    WriteStyleRequest,
+    WriteAttrRequest,
+  ])
+  .superRefine((msg, ctx) => {
+    if (
+      msg.type === "write-attr" &&
+      (msg.name === "href" || msg.name === "src") &&
+      FORBIDDEN_URL_SCHEME.test(msg.newValue)
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "script-scheme URLs are not allowed in href/src",
+      });
+    }
+  });
 export type ClientMessage = z.infer<typeof ClientMessage>;
 
 /** Companion -> extension responses (not validated client-side, plain types). */

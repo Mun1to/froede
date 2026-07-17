@@ -1,6 +1,6 @@
 {
   "name": "@froede/extension",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "description": "froede browser extension (Chrome/Edge, Manifest V3). Load dist/ unpacked from chrome://extensions.",
   "license": "MIT",

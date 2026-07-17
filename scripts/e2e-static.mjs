@@ -183,9 +183,52 @@ if (readFileSync(targetFile, "utf8").includes("999px")) {
   fail("file was written despite the style mismatch");
 }
 
+// --- attr edits ---------------------------------------------------------
+
+// Insert title on the bare <h1>.
+const respA1 = await send({
+  type: "write-attr",
+  requestId: "e2e-a1",
+  target: { kind: "static-html", urlPath: "/", domPath: [1, 1, 0] },
+  name: "title",
+  previousValue: "",
+  newValue: 'The "main" heading & more',
+});
+if (!respA1.ok) fail("attr insert failed: " + respA1.error);
+written = readFileSync(targetFile, "utf8");
+if (!written.includes('title="The &quot;main&quot; heading &amp; more"')) {
+  fail("title not inserted/escaped: " + written.match(/<h1[^>]*>/)?.[0]);
+}
+
+// Patch it.
+const respA2 = await send({
+  type: "write-attr",
+  requestId: "e2e-a2",
+  target: { kind: "static-html", urlPath: "/", domPath: [1, 1, 0] },
+  name: "title",
+  previousValue: 'The "main" heading & more',
+  newValue: "Simply the heading",
+});
+if (!respA2.ok) fail("attr patch failed: " + respA2.error);
+written = readFileSync(targetFile, "utf8");
+if (!written.includes('title="Simply the heading"')) {
+  fail("title not patched: " + written.match(/<h1[^>]*>/)?.[0]);
+}
+
+// javascript: URLs rejected at the protocol layer (element irrelevant).
+const respA3 = await send({
+  type: "write-attr",
+  requestId: "e2e-a3",
+  target: { kind: "static-html", urlPath: "/", domPath: [1, 1, 0] },
+  name: "href",
+  previousValue: "",
+  newValue: "  JAVASCRIPT:alert(1)",
+});
+if (respA3.ok) fail("javascript: URL was NOT rejected");
+
 ws.close();
 child.kill();
 writeFileSync(targetFile, original);
 console.log(
-  "PASS (static): text edit + escaping + traversal reject + bad-token reject + style insert (bare/with-attrs) + style patch + style mismatch reject",
+  "PASS (static): text edit + escaping + traversal reject + bad-token reject + style insert (bare/with-attrs) + style patch + style mismatch reject + attr insert/patch + js-url reject",
 );

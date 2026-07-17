@@ -192,9 +192,72 @@ if (readFileSync(targetFile, "utf8").includes("999px")) {
   fail("file was written despite the style mismatch");
 }
 
+// --- attr edits: the <a href="#work"> link ------------------------------
+
+const aIdx = original.indexOf('<a className="btn primary" href="#work">');
+if (aIdx < 0) fail("fixture does not contain the expected <a> element");
+const aBefore = original.slice(0, aIdx);
+const aLine = aBefore.split("\n").length;
+const aColumn = aIdx - (aBefore.lastIndexOf("\n") + 1);
+
+// Patch an existing attribute.
+const respA1 = await send({
+  type: "write-attr",
+  requestId: "e2e-a1",
+  target: { kind: "react", file: "src/App.tsx", line: aLine, column: aColumn },
+  name: "href",
+  previousValue: "#work",
+  newValue: "#pricing",
+});
+if (!respA1.ok) fail("attr patch failed: " + respA1.error);
+written = readFileSync(targetFile, "utf8");
+if (!written.includes('href="#pricing"')) {
+  fail("href not patched: " + written.match(/<a[^>]*>/)?.[0]);
+}
+
+// Insert a missing attribute.
+const respA2 = await send({
+  type: "write-attr",
+  requestId: "e2e-a2",
+  target: { kind: "react", file: "src/App.tsx", line: aLine, column: aColumn },
+  name: "title",
+  previousValue: "",
+  newValue: 'See "pricing" & more',
+});
+if (!respA2.ok) fail("attr insert failed: " + respA2.error);
+written = readFileSync(targetFile, "utf8");
+if (!written.includes('title="See &quot;pricing&quot; &amp; more"')) {
+  fail("title not inserted/escaped: " + written.match(/<a[^>]*>/)?.[0]);
+}
+
+// Stale previousValue must be rejected.
+const respA3 = await send({
+  type: "write-attr",
+  requestId: "e2e-a3",
+  target: { kind: "react", file: "src/App.tsx", line: aLine, column: aColumn },
+  name: "href",
+  previousValue: "#work", // stale - now #pricing
+  newValue: "#nope",
+});
+if (respA3.ok) fail("stale attr previousValue was NOT rejected");
+
+// javascript: URLs must be rejected at the protocol layer.
+const respA4 = await send({
+  type: "write-attr",
+  requestId: "e2e-a4",
+  target: { kind: "react", file: "src/App.tsx", line: aLine, column: aColumn },
+  name: "href",
+  previousValue: "#pricing",
+  newValue: "javascript:alert(1)",
+});
+if (respA4.ok) fail("javascript: URL was NOT rejected");
+if (readFileSync(targetFile, "utf8").includes("javascript:alert")) {
+  fail("javascript: URL landed in the file");
+}
+
 ws.close();
 child.kill();
 writeFileSync(targetFile, original);
 console.log(
-  "PASS (react): ping + text edit + mismatch reject + jsx escaping + style insert + style patch + style mismatch reject",
+  "PASS (react): ping + text edit + mismatch reject + jsx escaping + style insert + style patch + style mismatch reject + attr patch/insert/mismatch + js-url reject",
 );

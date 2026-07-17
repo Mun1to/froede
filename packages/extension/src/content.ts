@@ -119,12 +119,12 @@
       .froede-field { flex: 1; display: flex; align-items: center; gap: 6px; min-width: 0; }
       .froede-field label { color: #9ca3af; flex-shrink: 0; width: 32px; }
 
-      .froede-row input[type="number"] {
+      .froede-row input[type="number"], .froede-row input[type="text"] {
         width: 100%; min-width: 0;
         background: rgba(255,255,255,.05); border: 1px solid rgba(129,140,248,.3);
         color: #e0e7ff; border-radius: 7px; padding: 5px 7px; font: inherit;
       }
-      .froede-row input[type="number"]:focus {
+      .froede-row input[type="number"]:focus, .froede-row input[type="text"]:focus {
         outline: none; border-color: #818cf8; background: rgba(255,255,255,.09);
       }
       .froede-row input[type="color"] {
@@ -341,9 +341,10 @@
     place(handles.se, r.right, r.bottom);
 
     const panelWidth = 236;
-    const panelHeight = 300;
+    // Real height when rendered (the Attributes section varies per element).
+    const panelHeight = panel.offsetHeight || 300;
     const left = Math.max(8, Math.min(r.left, window.innerWidth - panelWidth - 16));
-    const belowFits = r.bottom + panelHeight < window.innerHeight;
+    const belowFits = r.bottom + panelHeight + 16 < window.innerHeight;
     panel.style.left = `${left}px`;
     panel.style.top = belowFits ? `${r.bottom + 8}px` : `${Math.max(8, r.top - panelHeight - 6)}px`;
   }
@@ -415,6 +416,7 @@
           ${field("Gap", numberInput("margin", Math.round(parseFloat(computed.marginTop) || 0), 0))}
         </div>
       </div>
+      ${attrSection(el)}
     `;
 
     panel.querySelector(".froede-panel-close")?.addEventListener("click", () => deselect());
@@ -429,7 +431,94 @@
       });
     });
 
+    panel.querySelectorAll<HTMLInputElement>("input[data-attr]").forEach((input) => {
+      const name = input.dataset.attr as FroedeAttrName | undefined;
+      if (!name) return;
+      input.addEventListener("change", () => commitAttrField(el, target, name, input));
+      input.addEventListener("keydown", (e) => {
+        e.stopPropagation();
+        if (e.key === "Enter") input.blur();
+      });
+    });
+
     return panel;
+  }
+
+  /** Which allowlisted attributes make sense to offer for this element. */
+  function relevantAttrs(el: HTMLElement): FroedeAttrName[] {
+    const attrs: FroedeAttrName[] = [];
+    const tag = el.tagName;
+    if (tag === "A") attrs.push("href");
+    if (tag === "IMG") attrs.push("src", "alt");
+    if (tag === "INPUT" || tag === "TEXTAREA") attrs.push("placeholder");
+    for (const extra of ["title", "alt", "href", "placeholder", "src"] as const) {
+      if (!attrs.includes(extra) && el.hasAttribute(extra)) attrs.push(extra);
+    }
+    return attrs;
+  }
+
+  function escapeAttrForHtml(s: string): string {
+    return s.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
+  }
+
+  function attrSection(el: HTMLElement): string {
+    const attrs = relevantAttrs(el);
+    if (attrs.length === 0) return "";
+    const rows = attrs
+      .map(
+        (name) => `
+        <div class="froede-row">
+          <div class="froede-field">
+            <label>${name}</label>
+            <input data-attr="${name}" type="text" value="${escapeAttrForHtml(el.getAttribute(name) ?? "")}">
+          </div>
+        </div>`,
+      )
+      .join("");
+    return `
+      <div class="froede-section">
+        <div class="froede-section-label">Attributes</div>
+        ${rows}
+      </div>
+    `;
+  }
+
+  function commitAttrField(
+    el: HTMLElement,
+    target: FroedeEditTarget,
+    name: FroedeAttrName,
+    input: HTMLInputElement,
+  ): void {
+    const previousValue = el.getAttribute(name) ?? "";
+    const newValue = input.value;
+    if (newValue === previousValue) return;
+    el.setAttribute(name, newValue);
+    chrome.runtime.sendMessage(
+      {
+        kind: "froede-write-attr",
+        target,
+        name,
+        previousValue,
+        newValue,
+      } satisfies FroedeRuntimeMessage,
+      (response: FroedeWriteResponse | undefined) => {
+        if (response?.ok) {
+          el.classList.add("froede-ok");
+          setTimeout(() => el.classList.remove("froede-ok"), 900);
+          toast(`froede: saved to ${response.file ?? "source"}`);
+        } else {
+          if (previousValue) el.setAttribute(name, previousValue);
+          else el.removeAttribute(name);
+          input.value = previousValue;
+          el.classList.add("froede-err");
+          setTimeout(() => el.classList.remove("froede-err"), 1200);
+          toast(
+            `froede: ${response?.error ?? "no response from the extension background"}`,
+            4200,
+          );
+        }
+      },
+    );
   }
 
   function commitStyleField(

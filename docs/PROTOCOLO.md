@@ -70,7 +70,23 @@ Igual que `write-text`, pero para tamaño/color/tipografía/espaciado. Siempre e
 
 `previousStyle` es el mismo tipo de red de seguridad que `previousText`, pero por propiedad: el companion compara el valor inline ACTUAL de cada clave contra lo que el cliente cree que hay (`""` si cree que no está seteada) antes de escribir nada; si no coincide, aborta la petición completa (todo o nada).
 
-## Por qué `previousText`/`previousStyle` viajan siempre
+### `write-attr` -> `write-result`
+
+Edición de atributos con **allowlist cerrado**: `alt`, `href`, `placeholder`, `src`, `title`. Los valores son texto libre (con escapado de entidades antes del splice: `&`/`"` en JSX, `&`/`"`/`<` en HTML), pero `href`/`src` **rechazan esquemas de script** (`javascript:`, `vbscript:`, `data:`) a nivel de protocolo (zod `superRefine`): aunque el usuario edita su propio sitio, froede nunca debe ser el vehículo que escriba un vector XSS en un archivo fuente.
+
+```jsonc
+{
+  "type": "write-attr", "requestId": "...",
+  "target": { "kind": "react", "file": "src/App.tsx", "line": 24, "column": 12 },
+  "name": "href",
+  "previousValue": "#work",
+  "newValue": "#pricing"
+}
+```
+
+`previousValue` es la misma red de seguridad que `previousText` (`""` = el cliente cree que el atributo no existe). En React solo se editan atributos con valor string literal (`{expresiones}` se rechazan); si el atributo no existe se inserta tras el nombre del tag. En HTML estático se reemplaza el rango exacto del atributo (parse5 da la ubicación por atributo) o se inserta antes del primero existente.
+
+## Por qué `previousText`/`previousStyle`/`previousValue` viajan siempre
 
 El archivo puede haber cambiado por fuera (editor, otro agente) entre que cargó la página y el clic. El companion compara (con espacios normalizados en texto; valor exacto en estilo) lo que encuentra en la ubicación resuelta contra lo que manda el cliente; si no coincide, aborta sin escribir. Es la red de seguridad de ambos mecanismos de mapeo.
 

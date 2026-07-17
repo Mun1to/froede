@@ -6,11 +6,19 @@ import {
   type ServerMessage,
 } from "@froede/protocol";
 import { publicErrorMessage } from "./errors.js";
-import { applyReactStyleEdit, applyReactTextEdit } from "./targets/reactSource.js";
-import { applyStaticStyleEdit, applyStaticTextEdit } from "./targets/staticHtml.js";
+import {
+  applyReactAttrEdit,
+  applyReactStyleEdit,
+  applyReactTextEdit,
+} from "./targets/reactSource.js";
+import {
+  applyStaticAttrEdit,
+  applyStaticStyleEdit,
+  applyStaticTextEdit,
+} from "./targets/staticHtml.js";
 import { tokensMatch } from "./token.js";
 
-export const COMPANION_VERSION = "0.2.0";
+export const COMPANION_VERSION = "0.3.0";
 
 export interface CompanionServer {
   close(): Promise<void>;
@@ -112,7 +120,7 @@ export async function startServer(options: {
                 previousText: msg.previousText,
                 newText: msg.newText,
               });
-      } else {
+      } else if (msg.type === "write-style") {
         result =
           target.kind === "react"
             ? await applyReactStyleEdit({
@@ -129,6 +137,26 @@ export async function startServer(options: {
                 domPath: target.domPath,
                 previousStyle: msg.previousStyle,
                 style: msg.style,
+              });
+      } else {
+        result =
+          target.kind === "react"
+            ? await applyReactAttrEdit({
+                root: options.root,
+                file: target.file,
+                line: target.line,
+                column: target.column,
+                name: msg.name,
+                previousValue: msg.previousValue,
+                newValue: msg.newValue,
+              })
+            : await applyStaticAttrEdit({
+                root: options.root,
+                urlPath: target.urlPath,
+                domPath: target.domPath,
+                name: msg.name,
+                previousValue: msg.previousValue,
+                newValue: msg.newValue,
               });
       }
 

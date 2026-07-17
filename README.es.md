@@ -1,8 +1,10 @@
+<p align="center"><img src="docs/brand/froede-logo.svg" width="110" alt="logo de froede"></p>
+
 # froede
 
 **front + edit + code.** Un toolkit ligero para editar el código detrás de una web o app en ejecución haciendo clic en lo que ves - sin bucear en el código fuente, sin necesitar un IDE completo.
 
-> **Estado: v0.2 (funcionando).** Texto, tamaño, color, tipografía y espaciado editan de punta a punta en ambos targets (HTML estático y React + Vite), verificado contra archivos reales. Layout y animaciones están en el roadmap. Todavía no está publicado en npm ni en la Chrome Web Store - ver el quickstart abajo.
+> **Estado: v0.3 (funcionando).** Texto, tamaño, color, tipografía, espaciado y atributos (alt, href, placeholder, src, title) editan de punta a punta en ambos targets (HTML estático y React + Vite), verificado contra archivos reales. Layout y animaciones están en el roadmap. Todavía no está publicado en npm ni en la Chrome Web Store - ver el quickstart abajo.
 
 ![Al seleccionar un elemento aparecen tiradores de redimensión y un panel de propiedades](docs/screenshots/panel-select.png)
 
@@ -27,9 +29,9 @@ Clic en cualquier elemento para seleccionarlo - aparecen tiradores en las esquin
 
 ## Quickstart (v0.2, desde el código)
 
-Guía completa en [`docs/INSTALAR.md`](docs/INSTALAR.md), incluido un prompt listo para pegarle a tu asistente de IA para que lo instale él. Resumen: `pnpm install && pnpm build`, cargar `packages/extension/dist` como extensión descomprimida, arrancar el companion con el cwd en tu proyecto, y en proyectos Vite añadir `froede()` al `vite.config.ts`.
+Guía completa en [`docs/INSTALAR.md`](docs/INSTALAR.md), incluido un prompt listo para pegarle a tu asistente de IA para que lo instale él. Resumen: `pnpm install && pnpm build`, cargar `packages/extension/dist` como extensión descomprimida, y en tu proyecto correr **`froede init`** (`node <froede>/packages/companion/dist/cli.js init`): detecta el vite.config, inyecta el plugin y protege el token en el `.gitignore` solo. Después arrancas el companion ahí mismo.
 
-v0.2 edita texto plano visible y tamaño/color/tipografía/espaciado inline - todavía sin layout (mover/duplicar/borrar) ni animaciones. Pruébalo con `examples/static-site`, `examples/react-vite-app` o `examples/demo-site`. El deshacer es `git diff`.
+v0.3 edita texto plano visible, tamaño/color/tipografía/espaciado inline, y un allowlist seguro de atributos (href/src rechazan URLs de tipo script) - todavía sin layout (mover/duplicar/borrar) ni animaciones. Pruébalo con `examples/static-site`, `examples/react-vite-app` o `examples/demo-site`. El deshacer es `git diff`.
 
 ## Panorama (a mediados de 2026)
 

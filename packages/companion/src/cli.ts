@@ -1,17 +1,21 @@
 #!/usr/bin/env node
 import { parseArgs } from "node:util";
 import path from "node:path";
+import { runInit } from "./init.js";
 import { COMPANION_VERSION, startServer } from "./server.js";
-import { loadOrCreateToken } from "./token.js";
+import { ensureTokenIgnored, loadOrCreateToken } from "./token.js";
 
 export const DEFAULT_PORT = 4519;
 
-const { values } = parseArgs({
+const { values, positionals } = parseArgs({
   options: {
     port: { type: "string", short: "p" },
     help: { type: "boolean", short: "h" },
   },
+  allowPositionals: true,
 });
+
+const root = path.resolve(process.cwd());
 
 if (values.help) {
   console.log(`froede companion v${COMPANION_VERSION}
@@ -20,9 +24,20 @@ Run this inside the project you want to edit. The current directory
 becomes the project root: froede will never write outside of it.
 
 Usage:
+  froede               start the companion here
+  froede init          wire this project up (vite plugin + gitignore)
   froede [--port ${DEFAULT_PORT}]
 `);
   process.exit(0);
+}
+
+if (positionals[0] === "init") {
+  await runInit(root);
+  process.exit(0);
+}
+if (positionals.length > 0) {
+  console.error(`unknown command: ${positionals[0]} (try --help)`);
+  process.exit(1);
 }
 
 const port = values.port ? Number(values.port) : DEFAULT_PORT;
@@ -31,9 +46,8 @@ if (!Number.isInteger(port) || port < 1 || port > 65535) {
   process.exit(1);
 }
 
-const root = path.resolve(process.cwd());
-
 const { token, created } = await loadOrCreateToken(root);
+const ignored = await ensureTokenIgnored(root);
 try {
   await startServer({
     root,
@@ -51,14 +65,18 @@ try {
   throw err;
 }
 
+const tokenNote = created ? "\n  Created .froede-token in the project root." : "";
+const ignoreNote =
+  ignored === "added" || ignored === "created"
+    ? "\n  Added .froede-token to this project's .gitignore (it is a local secret)."
+    : ignored === "no-git"
+      ? "\n  No git repo detected - keep .froede-token out of version control if you add one."
+      : "";
+
 console.log(`froede companion v${COMPANION_VERSION}
   project root: ${root}
   listening:    ws://127.0.0.1:${port}
   token:        ${token}
 
-  Open the froede extension popup and paste the port and token above.${
-    created
-      ? "\n  Created .froede-token in the project root - add it to your .gitignore."
-      : ""
-  }
+  Open the froede extension popup and paste the port and token above.${tokenNote}${ignoreNote}
 `);

@@ -124,6 +124,35 @@
         return true;
       }
 
+      if (message.kind === "froede-write-attr") {
+        (async () => {
+          try {
+            const result = await request({
+              type: "write-attr",
+              target: message.target,
+              name: message.name,
+              previousValue: message.previousValue,
+              newValue: message.newValue,
+            });
+            const ok = result.ok === true;
+            if (ok && message.target.kind === "static-html" && sender.tab?.id != null) {
+              chrome.tabs.reload(sender.tab.id);
+            }
+            sendResponse({
+              ok,
+              file: typeof result.file === "string" ? result.file : undefined,
+              error: typeof result.error === "string" ? result.error : undefined,
+            } satisfies FroedeWriteResponse);
+          } catch (err) {
+            sendResponse({
+              ok: false,
+              error: err instanceof Error ? err.message : String(err),
+            } satisfies FroedeWriteResponse);
+          }
+        })();
+        return true;
+      }
+
       if (message.kind === "froede-write-style") {
         (async () => {
           try {

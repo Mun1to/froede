@@ -1,16 +1,28 @@
 {
   "manifest_version": 3,
   "name": "froede",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "front + edit + code - click on your localhost page and the change lands in your real source files.",
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
   "background": {
     "service_worker": "background.js"
   },
   "action": {
     "default_popup": "popup.html",
-    "default_title": "froede"
+    "default_title": "froede",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
   },
-  "permissions": ["storage", "tabs"],
+  "permissions": ["storage", "activeTab"],
   "content_scripts": [
     {
       "matches": ["http://localhost/*", "http://127.0.0.1/*"],

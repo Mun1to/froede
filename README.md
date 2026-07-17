@@ -1,8 +1,10 @@
+<p align="center"><img src="docs/brand/froede-logo.svg" width="110" alt="froede logo"></p>
+
 # froede
 
 **front + edit + code.** A lightweight toolkit for editing the code behind a running web page or app by clicking on what you see - no diving into the source, no full IDE required.
 
-> **Status: v0.2 (working).** Text, size, color, typography and spacing all edit end to end on both targets (static HTML and React + Vite), verified against real files. Layout and animations are on the roadmap. Not yet published to npm or the Chrome Web Store - see the quickstart below.
+> **Status: v0.3 (working).** Text, size, color, typography, spacing and attributes (alt, href, placeholder, src, title) all edit end to end on both targets (static HTML and React + Vite), verified against real files. Layout and animations are on the roadmap. Not yet published to npm or the Chrome Web Store - see the quickstart below.
 
 ![Selecting an element shows resize handles and a property panel](docs/screenshots/panel-select.png)
 
@@ -45,13 +47,13 @@ pnpm install && pnpm build
 ```
 
 1. **Extension:** `chrome://extensions` -> Developer mode -> Load unpacked -> `packages/extension/dist`.
-2. **Companion:** `cd` into the project you want to edit, then `node <froede>/packages/companion/dist/cli.js`. It prints a port and token (a new one every restart).
-3. **React/Vite projects only:** add `froede()` from `@froede/vite-plugin` as the first plugin in `vite.config.ts` and restart dev.
-4. Open your localhost page, paste port + token in the extension popup, hit "Toggle edit mode". Click an element to select it, double-click text to edit it. The file is saved for real - your undo is `git diff`.
+2. **Wire up your project (one command):** `cd` into it and run `node <froede>/packages/companion/dist/cli.js init` - it detects a Vite config, injects the plugin as the first entry, and gitignores the token. Static HTML projects need no config at all.
+3. **Companion:** in the same folder, `node <froede>/packages/companion/dist/cli.js`. It prints a port and token (a new one every restart) and keeps the token out of git for you.
+4. Open your localhost page, paste port + token in the extension popup, hit "Toggle edit mode". Click an element to select it (handles + property panel, including its attributes), double-click text to edit it. The file is saved for real - your undo is `git diff`.
 
 Full walkthrough, including a ready-to-paste prompt for your AI coding session: [`docs/INSTALAR.md`](docs/INSTALAR.md) (Spanish). Try it on `examples/static-site`, `examples/react-vite-app` or `examples/demo-site`.
 
-v0.2 edits plain visible text and inline size/color/typography/spacing only - no layout (move/duplicate/delete) or animations yet.
+v0.3 edits plain visible text, inline size/color/typography/spacing, and a safe allowlist of attributes (href/src reject script-scheme URLs) - no layout (move/duplicate/delete) or animations yet.
 
 ## Landscape (as of mid-2026)
 

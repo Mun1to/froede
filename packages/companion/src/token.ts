@@ -34,3 +34,32 @@ export function tokensMatch(expected: string, received: string): boolean {
   const b = crypto.createHash("sha256").update(received).digest();
   return crypto.timingSafeEqual(a, b);
 }
+
+/**
+ * Makes sure .froede-token is gitignored in the project. The token is a
+ * local secret; relying on every user remembering to add it by hand is
+ * how secrets end up committed. Returns what happened so the caller can
+ * log it honestly.
+ */
+export async function ensureTokenIgnored(
+  root: string,
+): Promise<"already" | "added" | "created" | "no-git"> {
+  try {
+    await fs.stat(path.join(root, ".git"));
+  } catch {
+    return "no-git";
+  }
+  const gitignore = path.join(root, ".gitignore");
+  let content = "";
+  try {
+    content = await fs.readFile(gitignore, "utf8");
+  } catch {
+    await fs.writeFile(gitignore, TOKEN_FILE + "\n", "utf8");
+    return "created";
+  }
+  const lines = content.split(/\r?\n/).map((l) => l.trim());
+  if (lines.includes(TOKEN_FILE)) return "already";
+  const sep = content.endsWith("\n") || content === "" ? "" : "\n";
+  await fs.appendFile(gitignore, `${sep}${TOKEN_FILE}\n`, "utf8");
+  return "added";
+}

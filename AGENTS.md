@@ -25,8 +25,9 @@ Reglas para agentes de IA trabajando en este repo. Hereda las reglas generales d
    - Origin de páginas web se rechaza; solo `chrome-extension://` o clientes sin Origin (cubiertos por token).
    - Token en `.froede-token` (gitignored), comparación en tiempo constante.
    - El content script JAMÁS abre el WebSocket (heredaría el Origin de la página); solo el background service worker.
-   - Toda edición verifica `previousText` antes de escribir; en mismatch se aborta.
+   - Toda edición verifica el valor previo (`previousText`/`previousStyle`/`previousValue`) antes de escribir; en mismatch se aborta.
    - Los splices preservan formato (offsets exactos + padding), nunca reserializar AST completo al archivo del usuario.
+   - Estilos y atributos son ALLOWLISTS cerrados en `protocol` (regex por propiedad de estilo; `href`/`src` rechazan esquemas `javascript:`/`vbscript:`/`data:`). No añadir propiedades/atributos sin pensar el escapado del splice.
 5. **Los tipos de `packages/extension/src/types.d.ts` son un ESPEJO manual de `packages/protocol`** (la extensión no puede importar en runtime al compilar sin bundler). Si tocas el protocolo, actualiza ambos y sube `PROTOCOL_VERSION` si rompe compatibilidad.
 6. **Build y verificación:** `pnpm build` (raíz) y `pnpm e2e` (necesita Node >= 22). Los e2e deben pasar antes de cualquier commit que toque companion/protocol.
 7. Commits en inglés estilo `feat:`/`fix:`/`docs:`, sin `Co-Authored-By`. **Prohibido `git push` sin permiso explícito de Munir.**

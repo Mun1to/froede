@@ -4,7 +4,7 @@ import { parse } from "@babel/parser";
 import MagicString from "magic-string";
 import { FroedeError } from "../errors.js";
 import { resolveInsideRoot } from "../fsGuard.js";
-import { normalizeText } from "../text.js";
+import { escapeJsxAttr, normalizeText } from "../text.js";
 
 interface AstNode {
   type: string;
@@ -226,6 +226,52 @@ export async function applyReactStyleEdit(options: {
       const nameEnd = (opening.name as AstNode).end as number;
       s.appendLeft(nameEnd, ` style={{ ${toInsert.join(", ")} }}`);
     }
+  }
+
+  return writeResult(options.root, absFile, s.toString());
+}
+
+export async function applyReactAttrEdit(options: {
+  root: string;
+  file: string;
+  line: number;
+  column: number;
+  name: string;
+  previousValue: string;
+  newValue: string;
+}): Promise<{ file: string }> {
+  const { absFile, source, ast } = await parseProjectFile(options.root, options.file);
+  const element = findElementAt(ast, options.line, options.column);
+  const opening = element.openingElement as AstNode;
+  const attrs = (opening.attributes as AstNode[] | undefined) ?? [];
+  const attr = attrs.find(
+    (a) => a.type === "JSXAttribute" && (a.name as AstNode | undefined)?.name === options.name,
+  );
+
+  const s = new MagicString(source);
+  const escaped = `"${escapeJsxAttr(options.newValue)}"`;
+
+  if (attr) {
+    const value = attr.value as AstNode | null | undefined;
+    if (!value || value.type !== "StringLiteral") {
+      throw new FroedeError(
+        `${options.name} is not a plain string attribute ({expressions} are not editable) - edit it by hand`,
+      );
+    }
+    if (String(value.value ?? "") !== options.previousValue) {
+      throw new FroedeError(
+        "attribute mismatch - the source file changed underneath, reload the page and retry",
+      );
+    }
+    s.overwrite(value.start as number, value.end as number, escaped);
+  } else {
+    if (options.previousValue !== "") {
+      throw new FroedeError(
+        "attribute mismatch - the source file changed underneath, reload the page and retry",
+      );
+    }
+    const nameEnd = (opening.name as AstNode).end as number;
+    s.appendLeft(nameEnd, ` ${options.name}=${escaped}`);
   }
 
   return writeResult(options.root, absFile, s.toString());
