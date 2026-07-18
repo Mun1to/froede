@@ -15,7 +15,7 @@ Nada más. **Sin nube, sin cuenta, sin telemetría, sin IA.** Tu código nunca s
 ## Los cinco cerrojos
 
 1. **Solo local.** El companion escucha en `127.0.0.1` - no existe para tu red, y menos para internet.
-2. **Una web nunca puede conectarse.** Los navegadores marcan cada conexión con su origen; el companion rechaza todo lo que no sea la extensión de froede. Una web maliciosa no puede hablarle.
+2. **Una web nunca puede conectarse.** Los navegadores marcan cada conexión con su origen; el companion solo acepta el ID de la propia extensión froede y rechaza todo lo demás. Ni una web maliciosa ni ninguna otra extensión instalada puede hablarle.
 3. **Token de emparejamiento.** Un código secreto (guardado en `.froede-token`, gitignorado automáticamente) que pegas en la extensión una vez por proyecto. Sin él, nada puede pedirle al companion que escriba - ni siquiera otros programas de tu propio ordenador.
 4. **Vallado a una carpeta.** El companion físicamente no puede escribir fuera de la carpeta del proyecto donde lo arrancaste. Los trucos con symlinks y rutas `../` se comprueban y se rechazan.
 5. **Sin escrituras a ciegas.** Antes de cada edición, el companion relee el archivo y verifica que aún contiene lo que el navegador cree. Si algo cambió por debajo (editaste en tu IDE, otra herramienta lo tocó), la edición se aborta en vez de adivinar.

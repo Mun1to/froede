@@ -34,21 +34,46 @@ export async function startServer(options: {
   log?: (line: string) => void;
 }): Promise<CompanionServer> {
   const log = options.log ?? (() => {});
+
+  // The extension's stable ID in the Chrome Web Store. Locking the accepted
+  // Origin to this exact ID means no other installed extension can reach the
+  // companion - only froede can. When you load froede unpacked (development,
+  // or before the Store listing is approved) Chrome derives a different ID
+  // from the folder path, so point the companion at it with
+  //   FROEDE_EXTENSION_ID=<your-unpacked-id>
+  // (comma-separated list allowed, or "*" to trust any extension in local dev).
+  const WEBSTORE_EXTENSION_ID = "clfpgnbnfgaabdoiadjfkhfhmnfemeba";
+  const extraExtensionIds = (process.env.FROEDE_EXTENSION_ID ?? "")
+    .split(",")
+    .map((id) => id.trim())
+    .filter((id) => id.length > 0);
+  const trustAnyExtension = extraExtensionIds.includes("*");
+  const allowedOrigins = new Set(
+    [WEBSTORE_EXTENSION_ID, ...extraExtensionIds]
+      .filter((id) => id !== "*")
+      .map((id) => `chrome-extension://${id}`),
+  );
+
   const httpServer = http.createServer((_req, res) => {
     res.writeHead(426).end("froede companion speaks WebSocket only");
   });
   const wss = new WebSocketServer({ noServer: true, maxPayload: 1024 * 1024 });
 
   httpServer.on("upgrade", (req, socket, head) => {
-    // Layer 1: a browser page always sends its own Origin, so anything
-    // that is not the extension is rejected here. Non-browser clients can
+    // Layer 1: a browser page always sends its own Origin, so anything that
+    // is not the froede extension is rejected here. Non-browser clients can
     // omit or forge Origin, which is why the token layer exists below.
     const origin = req.headers.origin;
-    if (origin !== undefined && !origin.startsWith("chrome-extension://")) {
-      log(`rejected connection: origin ${origin}`);
-      socket.write("HTTP/1.1 403 Forbidden\r\n\r\n");
-      socket.destroy();
-      return;
+    if (origin !== undefined) {
+      const trusted = trustAnyExtension
+        ? origin.startsWith("chrome-extension://")
+        : allowedOrigins.has(origin);
+      if (!trusted) {
+        log(`rejected connection: origin ${origin}`);
+        socket.write("HTTP/1.1 403 Forbidden\r\n\r\n");
+        socket.destroy();
+        return;
+      }
     }
     // Layer 2: shared token, constant-time comparison.
     const url = new URL(req.url ?? "/", "http://127.0.0.1");

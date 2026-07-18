@@ -73,7 +73,7 @@ https://github.com/Mun1to/froede/blob/main/PRIVACY.md
 ## Assets checklist
 
 - [x] Icon 128x128 - `packages/extension/static/icons/icon128.png` (regenerado del logo nuevo)
-- [x] Screenshots (1280x800px, hasta 5) - `docs/screenshots/`: hero.png, text-edit.png, panel-select.png (ya a 1280x800)
+- [x] Screenshots (1280x800px, hasta 5) - `docs/screenshots/webstore/`: 1_hero, 2_edit, 3_panel, 4_guide (demo VoCript, 24-bit sin alfa). Espejo con nombres semánticos para el README en `docs/screenshots/` (hero/text-edit/panel-select/move-guides).
 - [ ] Promo tile pequeño 440x280 (opcional, no obligatorio para publicar)
 
 ## Lo que solo puede hacer Munir

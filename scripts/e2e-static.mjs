@@ -3,6 +3,7 @@
 // text and style, verifies the file on disk, then restores it.
 import { spawn } from "node:child_process";
 import { readFileSync, writeFileSync } from "node:fs";
+import http from "node:http";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -70,6 +71,49 @@ const badRejected = await new Promise((resolve) => {
   badWs.onclose = () => resolve(true);
 });
 if (!badRejected) fail("connection with a bad token was NOT rejected");
+
+// Reject check: Origin hardening. The upgrade only completes for the froede
+// extension's own Origin (or one allowlisted via FROEDE_EXTENSION_ID); another
+// installed extension or a web page is turned away before the token even
+// matters. The native WebSocket can't set Origin, so probe the raw handshake.
+function probeOrigin(origin) {
+  return new Promise((resolve) => {
+    const req = http.request({
+      host: "127.0.0.1",
+      port: PORT,
+      path: `/?token=${TOKEN}`,
+      headers: {
+        Origin: origin,
+        Connection: "Upgrade",
+        Upgrade: "websocket",
+        "Sec-WebSocket-Version": "13",
+        "Sec-WebSocket-Key": "dGhlIHNhbXBsZSBub25jZQ==",
+      },
+    });
+    req.on("upgrade", (_res, socket) => {
+      socket.destroy();
+      resolve(101);
+    });
+    req.on("response", (res) => {
+      res.destroy();
+      resolve(res.statusCode ?? 0);
+    });
+    req.on("error", () => resolve(0));
+    req.end();
+  });
+}
+const storeOrigin = await probeOrigin(
+  "chrome-extension://clfpgnbnfgaabdoiadjfkhfhmnfemeba",
+);
+if (storeOrigin !== 101) {
+  fail("the froede extension Origin was NOT accepted (got " + storeOrigin + ")");
+}
+const otherExtOrigin = await probeOrigin(
+  "chrome-extension://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+);
+if (otherExtOrigin === 101) fail("a different extension Origin was NOT rejected");
+const pageOrigin = await probeOrigin("http://evil.example");
+if (pageOrigin === 101) fail("a web-page Origin was NOT rejected");
 
 // --- text edit ---------------------------------------------------------
 
@@ -275,5 +319,5 @@ ws.close();
 child.kill();
 writeFileSync(targetFile, original);
 console.log(
-  "PASS (static): text edit + escaping + traversal reject + bad-token reject + style insert (bare/with-attrs) + style patch + transform (move) + style mismatch reject + attr insert/patch + js-url reject + delete (mismatch reject + clean removal)",
+  "PASS (static): text edit + escaping + traversal reject + bad-token reject + origin allowlist (store ok / other-ext + web rejected) + style insert (bare/with-attrs) + style patch + transform (move) + style mismatch reject + attr insert/patch + js-url reject + delete (mismatch reject + clean removal)",
 );

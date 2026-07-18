@@ -22,7 +22,7 @@ Reglas para agentes de IA trabajando en este repo. Hereda las reglas generales d
 3. **TypeScript `strict: true`** (base en `tsconfig.base.json`).
 4. **Seguridad, invariantes que NO se relajan:**
    - El companion solo escucha en `127.0.0.1` y solo escribe dentro de su `projectRoot` (`fsGuard.ts` con realpath + `path.relative`, nunca prefijos de string).
-   - Origin de páginas web se rechaza; solo `chrome-extension://` o clientes sin Origin (cubiertos por token).
+   - Origin de páginas web (y de otras extensiones) se rechaza; solo el `chrome-extension://<id-de-froede>` exacto (fijado en `server.ts`; override por `FROEDE_EXTENSION_ID` para unpacked/dev) o clientes sin Origin (cubiertos por token).
    - Token en `.froede-token` (gitignored), comparación en tiempo constante.
    - El content script JAMÁS abre el WebSocket (heredaría el Origin de la página); solo el background service worker.
    - Toda edición verifica el valor previo (`previousText`/`previousStyle`/`previousValue`) antes de escribir; en mismatch se aborta.

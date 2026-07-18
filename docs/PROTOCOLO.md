@@ -9,7 +9,7 @@ WebSocket sobre `ws://127.0.0.1:<puerto>` (por defecto **4519**). El companion n
 | Capa | Defiende contra | Mecanismo |
 |---|---|---|
 | 1. Bind a `127.0.0.1` | Atacantes de la LAN | El puerto no existe fuera de la máquina |
-| 2. Validación de `Origin` | Páginas web maliciosas (DNS rebinding, localhost hijack) | Solo se acepta `chrome-extension://*` o ausencia de Origin (cliente no-navegador). Un navegador SIEMPRE manda el Origin de la página, así que una web nunca pasa. Mismo arreglo que adoptó webpack-dev-server tras sufrir este ataque |
+| 2. Validación de `Origin` | Páginas web maliciosas (DNS rebinding, localhost hijack) y otras extensiones instaladas | Solo se acepta el `chrome-extension://<id-de-froede>` exacto (ID del Web Store `clfpgnbnfgaabdoiadjfkhfhmnfemeba`, fijado en `server.ts`; override con `FROEDE_EXTENSION_ID` para carga unpacked/dev) o ausencia de Origin (cliente no-navegador). Un navegador SIEMPRE manda el Origin de la página, así que ni una web ni otra extensión pasan. Mismo arreglo que adoptó webpack-dev-server tras sufrir este ataque |
 | 3. Token compartido | Otros procesos locales (pueden falsificar Origin) | `.froede-token` (48 hex, gitignored) generado por el companion; la extensión lo manda como query param; comparación en tiempo constante (hash sha256 de ambos lados + `timingSafeEqual`) |
 | 4. Confinamiento a `projectRoot` | Escrituras fuera del proyecto aunque todo lo demás falle | `realpath` de root y destino (neutraliza symlinks) + `path.relative` (rechaza `..` y absolutas). El root es el cwd donde arrancó el companion |
 

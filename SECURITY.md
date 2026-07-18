@@ -15,7 +15,7 @@ Nothing else. **No cloud, no account, no telemetry, no AI.** Your code never lea
 ## The five locks
 
 1. **Local only.** The companion listens on `127.0.0.1` - it does not exist for your network, let alone the internet.
-2. **Web pages can never connect.** Browsers stamp every connection with its origin; the companion rejects anything that is not the froede extension. A malicious website cannot talk to it.
+2. **Web pages can never connect.** Browsers stamp every connection with its origin; the companion accepts only froede's own extension ID and rejects everything else. Neither a malicious website nor any other installed extension can talk to it.
 3. **Pairing token.** A secret code (stored in `.froede-token`, gitignored automatically) that you paste into the extension once per project. Without it, nothing can ask the companion to write - not even other programs on your own computer.
 4. **Fenced to one folder.** The companion physically cannot write outside the project folder you started it in. Symlink tricks and `../` paths are checked and rejected.
 5. **No blind writes.** Before every edit, the companion re-reads the file and verifies it still contains what the browser thinks it does. If anything changed underneath (you edited in your IDE, another tool touched it), the edit is aborted instead of guessing.

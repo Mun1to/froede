@@ -11,7 +11,7 @@
 
 [![npm](https://img.shields.io/npm/v/froede)](https://www.npmjs.com/package/froede) [![license](https://img.shields.io/npm/l/froede)](LICENSE)
 
-> **Status: live on npm** (current version in the badge above). Text, size, color, typography, spacing and attributes (alt, href, placeholder, src, title) all edit end to end on both targets (static HTML and React + Vite), verified against real files. You can also **drag elements to move them** (with center-snap guides, like Canva) and **delete them** with Backspace. Full layout tools and animations are still on the roadmap. Not yet in the Chrome Web Store - the quickstart below covers the manual install.
+> **Status: live on npm** (current version in the badge above). Text, size, color, typography, spacing and attributes (alt, href, placeholder, src, title) all edit end to end on both targets (static HTML and React + Vite), verified against real files. You can also **drag elements to move them** (with center-snap guides, like Canva) and **delete them** with Backspace. Full layout tools and animations are still on the roadmap. **In review for the Chrome Web Store** - until it lands there, the quickstart below covers the manual install.
 
 ![Selecting an element shows resize handles and a property panel](docs/screenshots/panel-select.png)
 
@@ -21,9 +21,9 @@ Point at an element on a live page or app, change it - text, size, color, typogr
 
 ## See it in action
 
-| Before | Editing text | Selected: style + attributes |
-|---|---|---|
-| ![A portfolio page running on localhost](docs/screenshots/hero.png) | ![A heading being edited in place](docs/screenshots/text-edit.png) | ![A button selected, with resize handles and a panel showing size, colors, type, spacing and its href attribute](docs/screenshots/panel-select.png) |
+| Before | Editing text | Selected: style + attributes | Moving: center guides |
+|---|---|---|---|
+| ![A landing page running on localhost](docs/screenshots/hero.png) | ![A heading being edited in place](docs/screenshots/text-edit.png) | ![A button selected, with resize handles and a panel showing size, colors, type, spacing and its href attribute](docs/screenshots/panel-select.png) | ![An element being dragged, with a vertical guide snapping it to the center of its container](docs/screenshots/move-guides.png) |
 
 Click any element to select it - resize handles appear on its corners (Shift+drag to lock to one axis) and a panel shows size, color, typography, spacing and the element's editable attributes. Drag it to move it - smart guides snap it to the center of its container - and press Backspace to delete it. Double-click a text element to edit its content in place. Every change writes straight to the real source file.
 
@@ -41,14 +41,14 @@ Browser (Chrome/Edge)                     Your machine
 │ text, size, color, ... │  127.0.0.1    │ real source file and splices│
 └────────────────────────┘  + token      │ the edit (format preserved) │
                                          └─────────────────────────────┘
-                                     static HTML: parse5 + tab reload
+                                     static HTML: parse5 splice
                                      React/Vite:  babel loc + Vite HMR
 ```
 
 - **Static HTML:** the extension sends the element's DOM path; the companion maps it onto the file with parse5 (same WHATWG algorithm as the browser) and splices the text node or the `style="..."` attribute.
 - **React + Vite:** a tiny Vite plugin (`vite-plugin-froede`, dev-only) stamps every host element with `data-froede-loc="src/App.tsx:4:6"`; the companion re-parses that file and splices the exact JSX text or patches the `style={{}}` object. Vite HMR shows the change instantly.
 - **Style edits are always inline and always scoped to the exact element** - never a shared class rule, so resizing one card never moves its siblings.
-- **Security:** loopback only, Origin check (web pages can never connect), shared token (constant-time compared), and the companion physically cannot write outside the project folder it was started in. Every edit verifies the current value first and aborts on mismatch.
+- **Security:** loopback only, Origin locked to froede's own extension ID (web pages and other extensions can never connect), shared token (constant-time compared), and the companion physically cannot write outside the project folder it was started in. Every edit verifies the current value first and aborts on mismatch.
 
 ## Quickstart
 
@@ -69,9 +69,11 @@ Browser (Chrome/Edge)                     Your machine
 
    Open your localhost page, paste the port + token into the extension popup, and hit "Toggle edit mode". Click to select, double-click to edit text - every change is saved to the real file, and your undo is `git diff`.
 
+   > Loaded unpacked? Chrome gives the extension a per-folder ID that the companion has to trust. Copy the ID shown under the extension in `chrome://extensions` and start the companion with it: `FROEDE_EXTENSION_ID=<that-id> npx froede` (PowerShell: `$env:FROEDE_EXTENSION_ID="<that-id>"; npx froede`). Once froede is installed from the Chrome Web Store this isn't needed - its ID is trusted by default.
+
 Full walkthrough, including a ready-to-paste prompt for your AI coding session: [`docs/INSTALAR.md`](docs/INSTALAR.md) (Spanish).
 
-v0.3 edits plain visible text, inline size/color/typography/spacing, and a safe allowlist of attributes (href/src reject script-scheme URLs) - no layout (move/duplicate/delete) or animations yet.
+v0.4 edits plain visible text, inline size/color/typography/spacing, and a safe allowlist of attributes (href/src reject script-scheme URLs), and adds layout basics - drag to move (with center-snap guides) and delete. Duplicating elements and animations are still on the roadmap.
 
 ## Landscape (as of mid-2026)
 
