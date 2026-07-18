@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>VoCript — your voice, your machine, no middlemen</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <linearGradient id="vc" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#93c5fd"/>
+        <stop offset="55%" stop-color="#60a5fa"/>
+        <stop offset="100%" stop-color="#3b82f6"/>
+      </linearGradient>
+    </defs>
+  </svg>
+
+  <header class="nav">
+    <a class="brand" href="#">
+      <svg class="wave" viewBox="0 0 103 120" aria-hidden="true">
+        <g fill="url(#vc)">
+          <rect x="8" y="50" width="11" height="20" rx="5.5"/>
+          <rect x="27" y="36" width="11" height="48" rx="5.5"/>
+          <rect x="46" y="20" width="11" height="80" rx="5.5"/>
+          <rect x="65" y="40" width="11" height="40" rx="5.5"/>
+          <rect x="84" y="52" width="11" height="16" rx="5.5"/>
+        </g>
+      </svg>
+      VoCript
+    </a>
+    <nav class="nav-links">
+      <a href="#">Features</a>
+      <a href="#">Privacy</a>
+      <a href="#">Pricing</a>
+      <a href="#">Docs</a>
+    </nav>
+    <div class="nav-actions">
+      <a class="link-muted" href="#">Star on GitHub</a>
+      <a class="btn btn-primary" href="#">Download for Windows</a>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="hero-copy">
+        <span class="badge">Open source · Windows 10 &amp; 11</span>
+        <h1>Your voice. Your machine. No middlemen.</h1>
+        <p class="lead">
+          VoCript turns speech into text in any app, with a single hotkey. It runs fully
+          offline on your PC, so your audio never touches the cloud, no account and no
+          telemetry.
+        </p>
+        <div class="hero-actions">
+          <a class="btn btn-primary btn-lg" href="#">Download for Windows</a>
+          <a class="btn btn-ghost btn-lg" href="#">Star on GitHub</a>
+        </div>
+        <p class="hero-note">Free and open source. Nothing leaves your machine.</p>
+      </div>
+
+      <div class="hero-preview" aria-hidden="true">
+        <div class="vc">
+          <div class="vc-top">
+            <span class="rec"></span>
+            <span class="vc-status">Listening</span>
+            <span class="vc-hotkey">Ctrl + Space</span>
+          </div>
+          <div class="vc-wave">
+            <i style="height:6px"></i><i style="height:12px"></i><i style="height:20px"></i>
+            <i style="height:30px"></i><i style="height:38px"></i><i style="height:28px"></i>
+            <i style="height:16px"></i><i style="height:10px"></i><i style="height:18px"></i>
+            <i style="height:26px"></i><i style="height:36px"></i><i style="height:30px"></i>
+            <i style="height:20px"></i><i style="height:12px"></i><i style="height:22px"></i>
+            <i style="height:34px"></i><i style="height:40px"></i><i style="height:32px"></i>
+            <i style="height:22px"></i><i style="height:14px"></i><i style="height:10px"></i>
+            <i style="height:18px"></i><i style="height:28px"></i><i style="height:24px"></i>
+            <i style="height:16px"></i><i style="height:10px"></i><i style="height:8px"></i>
+          </div>
+          <div class="vc-line">Send the report by <b>Friday</b> and cc the whole team.<span class="caret"></span></div>
+          <div class="vc-bottom"><span class="tick"></span> Inserted into your editor — 100% offline</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="logos">
+      <span>Dictate into every app you already use</span>
+      <div class="logo-row">
+        <b>VS Code</b><b>Slack</b><b>Notion</b><b>Gmail</b><b>Word</b><b>Terminal</b>
+      </div>
+    </section>
+
+    <section class="features">
+      <div class="feature">
+        <div class="f-icon">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4 6v6c0 4.4 3.2 7.6 8 9 4.8-1.4 8-4.6 8-9V6z"/><path d="m9 12 2 2 4-4"/></svg>
+        </div>
+        <h3>100% offline</h3>
+        <p>Your voice is transcribed on your own machine. No cloud, no account, no audio leaving your PC. Ever.</p>
+      </div>
+      <div class="feature">
+        <div class="f-icon">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M8 14h8"/></svg>
+        </div>
+        <h3>Type anywhere with one hotkey</h3>
+        <p>Hold a key, speak, release. VoCript drops the transcribed text straight into whatever app you are using.</p>
+      </div>
+      <div class="feature">
+        <div class="f-icon">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h2l2-6 4 14 3-9 2 3h5"/></svg>
+        </div>
+        <h3>Whisper-quality, tuned for dictation</h3>
+        <p>Local Whisper models optimized for real speech, so punctuation, names and even code come out clean.</p>
+      </div>
+    </section>
+
+    <section class="cta">
+      <h2>Stop typing. Start talking.</h2>
+      <p>Dictate your next email, commit message or document, without touching the cloud.</p>
+      <a class="btn btn-invert btn-lg" href="#">Download for Windows</a>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <div class="foot-brand">
+      <svg class="wave sm" viewBox="0 0 103 120" aria-hidden="true"><g fill="url(#vc)"><rect x="8" y="50" width="11" height="20" rx="5.5"/><rect x="27" y="36" width="11" height="48" rx="5.5"/><rect x="46" y="20" width="11" height="80" rx="5.5"/><rect x="65" y="40" width="11" height="40" rx="5.5"/><rect x="84" y="52" width="11" height="16" rx="5.5"/></g></svg>
+      <span>VoCript</span>
+    </div>
+    <div class="foot-cols">
+      <div><h4>Product</h4><a href="#">Features</a><a href="#">Pricing</a><a href="#">Changelog</a></div>
+      <div><h4>Project</h4><a href="#">GitHub</a><a href="#">Docs</a><a href="#">Security</a></div>
+      <div><h4>Company</h4><a href="#">About</a><a href="#">Contact</a><a href="#">Privacy</a></div>
+    </div>
+    <p class="foot-copy">© 2026 VoCript. A demo page for froede.</p>
+  </footer>
+</body>
+</html>

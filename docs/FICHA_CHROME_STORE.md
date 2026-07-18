@@ -19,10 +19,11 @@ Point, click, edit your localhost page - text, size, color, spacing - straight i
 ```
 froede is a lightweight toolkit for editing the code behind a running web page or app by clicking on what you see - no diving into the source, no full IDE required.
 
-Point at an element on a page running on localhost, change it - text, size, color, typography, spacing, attributes - and have that change land in the real source file. Not in a sandbox. Not through an AI agent as a middleman. Not a throwaway DOM tweak that disappears on reload.
+Point at an element on a page running on localhost, change it - text, size, color, typography, spacing, attributes, its position (drag to move) - or delete it, and have that change land in the real source file. Not in a sandbox. Not through an AI agent as a middleman. Not a throwaway DOM tweak that disappears on reload.
 
 How it works:
 - Click any element to select it. Resize handles appear on its corners (Shift+drag to lock to one axis), and a panel shows size, color, typography, spacing and the element's editable attributes.
+- Drag an element to move it, with smart guides that snap it to the center of its container. Press Backspace to delete the selected element.
 - Double-click a text element to edit its content in place.
 - Every change writes straight to the real source file on your machine - static HTML and React + Vite projects are both supported.
 
@@ -41,7 +42,7 @@ froede is open source (MIT). Full docs, source and security model: https://githu
 **Single purpose description:**
 
 ```
-froede lets a developer click an element on their own localhost page and edit its text, size, color, typography, spacing or attributes, writing the change directly back into the real source file they are running - a point-and-click alternative to hand-editing code for simple visual tweaks.
+froede lets a developer click an element on their own localhost page and edit its text, size, color, typography, spacing, attributes or position, or delete it, writing the change directly back into the real source file they are running - a point-and-click alternative to hand-editing code for simple visual tweaks.
 ```
 
 **Permission justifications:**
@@ -72,7 +73,7 @@ https://github.com/Mun1to/froede/blob/main/PRIVACY.md
 ## Assets checklist
 
 - [x] Icon 128x128 - `packages/extension/static/icons/icon128.png` (regenerado del logo nuevo)
-- [ ] Screenshots (1280x800px, hasta 5) - ver `docs/screenshots/` (pendiente de regenerar a este tamaño, ver tarea de capturas)
+- [x] Screenshots (1280x800px, hasta 5) - `docs/screenshots/`: hero.png, text-edit.png, panel-select.png (ya a 1280x800)
 - [ ] Promo tile pequeño 440x280 (opcional, no obligatorio para publicar)
 
 ## Lo que solo puede hacer Munir

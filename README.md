@@ -1,4 +1,9 @@
-<p align="center"><img src="docs/brand/froede_logo_png.png" width="110" alt="froede logo"></p>
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/brand/froede_logoclaro.svg">
+    <img src="docs/brand/froede_logooscuro.svg" width="110" alt="froede logo">
+  </picture>
+</p>
 
 # froede
 
@@ -6,13 +11,13 @@
 
 [![npm](https://img.shields.io/npm/v/froede)](https://www.npmjs.com/package/froede) [![license](https://img.shields.io/npm/l/froede)](LICENSE)
 
-> **Status: live on npm** (current version in the badge above). Text, size, color, typography, spacing and attributes (alt, href, placeholder, src, title) all edit end to end on both targets (static HTML and React + Vite), verified against real files - including a real `npx froede@latest init` run against a clean project. Layout and animations are on the roadmap. Not yet in the Chrome Web Store - the quickstart below covers the manual install.
+> **Status: live on npm** (current version in the badge above). Text, size, color, typography, spacing and attributes (alt, href, placeholder, src, title) all edit end to end on both targets (static HTML and React + Vite), verified against real files. You can also **drag elements to move them** (with center-snap guides, like Canva) and **delete them** with Backspace. Full layout tools and animations are still on the roadmap. Not yet in the Chrome Web Store - the quickstart below covers the manual install.
 
 ![Selecting an element shows resize handles and a property panel](docs/screenshots/panel-select.png)
 
 ## The idea
 
-Point at an element on a live page or app, change it - text, size, color, typography, spacing, attributes - and have that change land in the real source code. Not in a sandbox. Not through an AI agent as a middleman. Not a throwaway DOM tweak that disappears on reload. As simple and intuitive as a devtools extension, not a full design app.
+Point at an element on a live page or app, change it - text, size, color, typography, spacing, attributes, its position (drag to move) - or delete it, and have that change land in the real source code. Not in a sandbox. Not through an AI agent as a middleman. Not a throwaway DOM tweak that disappears on reload. As simple and intuitive as a devtools extension, not a full design app.
 
 ## See it in action
 
@@ -20,7 +25,7 @@ Point at an element on a live page or app, change it - text, size, color, typogr
 |---|---|---|
 | ![A portfolio page running on localhost](docs/screenshots/hero.png) | ![A heading being edited in place](docs/screenshots/text-edit.png) | ![A button selected, with resize handles and a panel showing size, colors, type, spacing and its href attribute](docs/screenshots/panel-select.png) |
 
-Click any element to select it - resize handles appear on its corners (Shift+drag to lock to one axis) and a panel shows size, color, typography, spacing and the element's editable attributes. Double-click a text element to edit its content in place. Every change writes straight to the real source file.
+Click any element to select it - resize handles appear on its corners (Shift+drag to lock to one axis) and a panel shows size, color, typography, spacing and the element's editable attributes. Drag it to move it - smart guides snap it to the center of its container - and press Backspace to delete it. Double-click a text element to edit its content in place. Every change writes straight to the real source file.
 
 ## Is it safe?
 

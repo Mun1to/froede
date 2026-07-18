@@ -1,4 +1,9 @@
-<p align="center"><img src="docs/brand/froede_logo_png.png" width="110" alt="logo de froede"></p>
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/brand/froede_logoclaro.svg">
+    <img src="docs/brand/froede_logooscuro.svg" width="110" alt="logo de froede">
+  </picture>
+</p>
 
 # froede
 
@@ -6,13 +11,13 @@
 
 [![npm](https://img.shields.io/npm/v/froede)](https://www.npmjs.com/package/froede) [![license](https://img.shields.io/npm/l/froede)](LICENSE)
 
-> **Estado: publicado en npm** (versión actual en el badge de arriba). Texto, tamaño, color, tipografía, espaciado y atributos (alt, href, placeholder, src, title) editan de punta a punta en ambos targets (HTML estático y React + Vite), verificado contra archivos reales - incluida una corrida real de `npx froede@latest init` contra un proyecto limpio. Layout y animaciones están en el roadmap. Todavía no está en la Chrome Web Store - el quickstart de abajo cubre la instalación manual.
+> **Estado: publicado en npm** (versión actual en el badge de arriba). Texto, tamaño, color, tipografía, espaciado y atributos (alt, href, placeholder, src, title) editan de punta a punta en ambos targets (HTML estático y React + Vite), verificado contra archivos reales. También puedes **arrastrar elementos para moverlos** (con guías de centrado, tipo Canva) y **borrarlos** con Backspace. Las herramientas de layout completas y las animaciones siguen en el roadmap. Todavía no está en la Chrome Web Store - el quickstart de abajo cubre la instalación manual.
 
 ![Al seleccionar un elemento aparecen tiradores de redimensión y un panel de propiedades](docs/screenshots/panel-select.png)
 
 ## La idea
 
-Señalas un elemento en una página o app en ejecución, lo cambias - texto, tamaño, color, tipografía, espaciado, atributos - y ese cambio llega al código fuente real. Sin sandbox. Sin un agente de IA como intermediario. Sin ser un cambio efímero en el DOM que desaparece al recargar. Tan simple e intuitivo como una extensión de devtools, no una app de diseño completa.
+Señalas un elemento en una página o app en ejecución, lo cambias - texto, tamaño, color, tipografía, espaciado, atributos, su posición (arrastrar para mover) - o lo borras, y ese cambio llega al código fuente real. Sin sandbox. Sin un agente de IA como intermediario. Sin ser un cambio efímero en el DOM que desaparece al recargar. Tan simple e intuitivo como una extensión de devtools, no una app de diseño completa.
 
 ## En acción
 
@@ -20,7 +25,7 @@ Señalas un elemento en una página o app en ejecución, lo cambias - texto, tam
 |---|---|---|
 | ![Un portafolio corriendo en localhost](docs/screenshots/hero.png) | ![Un título editándose en el sitio](docs/screenshots/text-edit.png) | ![Un botón seleccionado, con tiradores y panel de tamaño, colores, tipografía, espaciado y su atributo href](docs/screenshots/panel-select.png) |
 
-Clic en cualquier elemento para seleccionarlo - aparecen tiradores en las esquinas (Shift+arrastre para trabar a un solo eje) y un panel con tamaño, color, tipografía, espaciado y los atributos editables del elemento. Doble clic en un texto para editarlo en el sitio. Cada cambio se escribe directo en el archivo fuente real.
+Clic en cualquier elemento para seleccionarlo - aparecen tiradores en las esquinas (Shift+arrastre para trabar a un solo eje) y un panel con tamaño, color, tipografía, espaciado y los atributos editables del elemento. Arrástralo para moverlo - las guías lo centran automáticamente - y pulsa Backspace para borrarlo. Doble clic en un texto para editarlo en el sitio. Cada cambio se escribe directo en el archivo fuente real.
 
 ## ¿Es seguro?
 

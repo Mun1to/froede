@@ -4,7 +4,7 @@ Ya está pagada la cuenta de desarrollador ($5, 2026-07-18). Esto es lo que ya d
 
 ## Ya preparado
 
-- **Logo nuevo** integrado: README (EN/ES), ícono de la extensión (16/32/48/128, regenerados a pantalla completa desde tu diseño en `docs/brand/froede_logo_png.png`). Extensión subida a versión `0.3.1` (antes 0.3.0, sin cambios de código - solo el ícono).
+- **Logo nuevo** integrado: README (EN/ES), ícono de la extensión (16/32/48/128, regenerados a pantalla completa desde tu diseño en `docs/brand/` - variantes `froede_logoclaro_png.png` / `froede_logooscuro_png.png`). Extensión subida a versión `0.3.1` (antes 0.3.0, sin cambios de código - solo el ícono).
 - **Política de privacidad**: [`PRIVACY.md`](../PRIVACY.md), enlazada desde el README. froede no recopila ningún dato, así que es una declaración simple y honesta.
 - **Textos de la ficha** (nombre, resumen, descripción larga, propósito único, justificación de cada permiso, respuestas del formulario de prácticas de datos): todo listo para copiar y pegar en [`docs/FICHA_CHROME_STORE.md`](FICHA_CHROME_STORE.md).
 - **Capturas de pantalla** a 1280x800 (tamaño exigido, antes eran 1000px de ancho): `docs/screenshots/hero.png`, `text-edit.png`, `panel-select.png`.
