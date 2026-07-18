@@ -68,6 +68,10 @@ const PX_OR_NONE = /^(none|\d+(\.\d+)?(px|%))$/;
 const PX_ONLY = /^\d+(\.\d+)?px$/;
 const HEX_COLOR = /^#[0-9a-f]{6}$/i;
 const FONT_WEIGHT = /^(normal|bold|[1-9]00)$/;
+// Drag-to-move writes a translate() transform. Locked to two (optionally
+// negative) px offsets so it splices into a source file as safely as every
+// other value here - no arbitrary transform functions get through.
+const TRANSLATE = /^translate\(-?\d+(\.\d+)?px,\s*-?\d+(\.\d+)?px\)$/;
 
 export const StyleEdits = z
   .object({
@@ -87,6 +91,7 @@ export const StyleEdits = z
     fontWeight: z.string().regex(FONT_WEIGHT).optional(),
     padding: z.string().regex(PX_ONLY).optional(),
     margin: z.string().regex(PX_ONLY).optional(),
+    transform: z.string().regex(TRANSLATE).optional(),
   })
   .strict()
   .refine((obj) => Object.keys(obj).length > 0, "at least one style property required");
@@ -133,12 +138,26 @@ export const WriteAttrRequest = z.object({
 });
 export type WriteAttrRequest = z.infer<typeof WriteAttrRequest>;
 
+export const DeleteElementRequest = z.object({
+  type: z.literal("delete-element"),
+  requestId: z.string().min(1).max(100),
+  target: EditTarget,
+  /**
+   * Tag name (lowercase) the content script believes the element has. A cheap
+   * drift guard on top of the resolved location: deleting is destructive, so
+   * the companion bails if the file no longer has that kind of element there.
+   */
+  previousTag: z.string().min(1).max(64),
+});
+export type DeleteElementRequest = z.infer<typeof DeleteElementRequest>;
+
 export const ClientMessage = z
   .discriminatedUnion("type", [
     PingRequest,
     WriteTextRequest,
     WriteStyleRequest,
     WriteAttrRequest,
+    DeleteElementRequest,
   ])
   .superRefine((msg, ctx) => {
     if (

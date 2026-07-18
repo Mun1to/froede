@@ -164,6 +164,21 @@ if (!written.includes(`width: "320px"`) || !written.includes(`color: "#ff0000"`)
   fail("style object not patched correctly: " + written.match(/<h1[^>]*>/)?.[0]);
 }
 
+// Drag-to-move: a translate() transform must pass the allowlist and land in
+// the style object as a plain string literal.
+const respT = await send({
+  type: "write-style",
+  requestId: "e2e-t",
+  target: { kind: "react", file: "src/App.tsx", line, column },
+  previousStyle: { transform: "" },
+  style: { transform: "translate(24px, -8px)" },
+});
+if (!respT.ok) fail("transform (move) failed: " + respT.error);
+written = readFileSync(targetFile, "utf8");
+if (!written.includes(`transform: "translate(24px, -8px)"`)) {
+  fail("transform not written to <h1>: " + written.match(/<h1[^>]*>/)?.[0]);
+}
+
 // maxWidth (the fix for CSS classes capping an inline width/height) must
 // round-trip through the allowlist and land as a real value, not "none".
 const respMax = await send({
@@ -255,9 +270,38 @@ if (readFileSync(targetFile, "utf8").includes("javascript:alert")) {
   fail("javascript: URL landed in the file");
 }
 
+// --- delete element -----------------------------------------------------
+
+const blankLines = (s) => s.split("\n").filter((l) => /^\s+$/.test(l)).length;
+
+// Mismatch guard: a wrong previousTag must be rejected (nothing deleted).
+const respD0 = await send({
+  type: "delete-element",
+  requestId: "e2e-d0",
+  target: { kind: "react", file: "src/App.tsx", line: aLine, column: aColumn },
+  previousTag: "button", // wrong - it is an <a>
+});
+if (respD0.ok) fail("delete with a mismatched previousTag was NOT rejected");
+
+// Delete the <a>: it vanishes from the JSX, no extra blank line left behind.
+const respD1 = await send({
+  type: "delete-element",
+  requestId: "e2e-d1",
+  target: { kind: "react", file: "src/App.tsx", line: aLine, column: aColumn },
+  previousTag: "a",
+});
+if (!respD1.ok) fail("delete failed: " + respD1.error);
+written = readFileSync(targetFile, "utf8");
+if (written.includes('href="#pricing"') || written.includes("See &quot;pricing")) {
+  fail("deleted <a> still present in App.tsx");
+}
+if (blankLines(written) > blankLines(original)) {
+  fail("delete left a blank indented line behind");
+}
+
 ws.close();
 child.kill();
 writeFileSync(targetFile, original);
 console.log(
-  "PASS (react): ping + text edit + mismatch reject + jsx escaping + style insert + style patch + style mismatch reject + attr patch/insert/mismatch + js-url reject",
+  "PASS (react): ping + text edit + mismatch reject + jsx escaping + style insert + style patch + transform (move) + style mismatch reject + attr patch/insert/mismatch + js-url reject + delete (mismatch reject + clean removal)",
 );

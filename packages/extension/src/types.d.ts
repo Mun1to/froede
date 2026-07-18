@@ -20,6 +20,7 @@ type FroedeStyleEdits = Partial<{
   fontWeight: string;
   padding: string;
   margin: string;
+  transform: string;
 }>;
 
 /** Mirrors packages/protocol ATTR_NAMES - keep in sync by hand. */
@@ -45,6 +46,11 @@ type FroedeRuntimeMessage =
       name: FroedeAttrName;
       previousValue: string;
       newValue: string;
+    }
+  | {
+      kind: "froede-delete";
+      target: FroedeEditTarget;
+      previousTag: string;
     }
   | { kind: "froede-test" }
   | { kind: "froede-toggle-tab" };

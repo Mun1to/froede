@@ -2,7 +2,7 @@ import { promises as fs } from "node:fs";
 import { parse } from "parse5";
 import { FroedeError } from "../errors.js";
 import { resolveInsideRoot } from "../fsGuard.js";
-import { escapeHtmlAttr, escapeHtmlText, normalizeText, spliceKeepingPadding } from "../text.js";
+import { deleteRangeOnItsLine, escapeHtmlAttr, escapeHtmlText, normalizeText, spliceKeepingPadding } from "../text.js";
 import { parseStyleAttr, serializeStyleAttr } from "../styleAttr.js";
 
 interface AttrLocation {
@@ -205,6 +205,29 @@ export async function applyStaticAttrEdit(options: {
     ? source.slice(0, attrLoc.startOffset) + attrText + source.slice(attrLoc.endOffset)
     : insertNewAttr(source, startTag, attrText);
 
+  await fs.writeFile(absFile, updated, "utf8");
+  return { file: relFile };
+}
+
+export async function applyStaticDelete(options: {
+  root: string;
+  urlPath: string;
+  domPath: number[];
+  previousTag: string;
+}): Promise<{ file: string }> {
+  const { absFile, relFile, source, node } = await locateStaticElement(
+    options.root,
+    options.urlPath,
+    options.domPath,
+  );
+  const loc = node.sourceCodeLocation;
+  if (!loc) throw new FroedeError("element has no source location");
+  if ((node.tagName ?? "").toLowerCase() !== options.previousTag.toLowerCase()) {
+    throw new FroedeError(
+      "element mismatch - the source file changed underneath, reload the page and retry",
+    );
+  }
+  const updated = deleteRangeOnItsLine(source, loc.startOffset, loc.endOffset);
   await fs.writeFile(absFile, updated, "utf8");
   return { file: relFile };
 }

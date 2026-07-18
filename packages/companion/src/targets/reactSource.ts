@@ -4,7 +4,7 @@ import { parse } from "@babel/parser";
 import MagicString from "magic-string";
 import { FroedeError } from "../errors.js";
 import { resolveInsideRoot } from "../fsGuard.js";
-import { escapeJsxAttr, normalizeText } from "../text.js";
+import { deleteRangeOnItsLine, escapeJsxAttr, normalizeText } from "../text.js";
 
 interface AstNode {
   type: string;
@@ -275,4 +275,32 @@ export async function applyReactAttrEdit(options: {
   }
 
   return writeResult(options.root, absFile, s.toString());
+}
+
+export async function applyReactDelete(options: {
+  root: string;
+  file: string;
+  line: number;
+  column: number;
+  previousTag: string;
+}): Promise<{ file: string }> {
+  const { absFile, source, ast } = await parseProjectFile(options.root, options.file);
+  const element = findElementAt(ast, options.line, options.column);
+  const opening = element.openingElement as AstNode;
+  const tag = typeof (opening.name as AstNode).name === "string"
+    ? String((opening.name as AstNode).name)
+    : "";
+  // Guard on the tag only for plain HTML elements (lowercase). A component
+  // (<Foo/>) renders to some other DOM tag, so the client's previousTag can
+  // never match its JSX name - there we trust the exact plugin-stamped loc.
+  if (/^[a-z]/.test(tag) && tag.toLowerCase() !== options.previousTag.toLowerCase()) {
+    throw new FroedeError(
+      "element mismatch - the source file changed underneath, reload the page and retry",
+    );
+  }
+  if (typeof element.start !== "number" || typeof element.end !== "number") {
+    throw new FroedeError("element has no source location");
+  }
+  const updated = deleteRangeOnItsLine(source, element.start, element.end);
+  return writeResult(options.root, absFile, updated);
 }

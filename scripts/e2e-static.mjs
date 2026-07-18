@@ -170,6 +170,20 @@ if (!written.includes('style="width: 320px; color: #00ff00;"')) {
   fail("style attribute not patched correctly: " + written.match(/<h1[^>]*>/)?.[0]);
 }
 
+// Drag-to-move: a translate() transform must pass the allowlist and merge in.
+const respT = await send({
+  type: "write-style",
+  requestId: "e2e-t",
+  target: { kind: "static-html", urlPath: "/", domPath: [1, 1, 0] },
+  previousStyle: { transform: "" },
+  style: { transform: "translate(24px, -8px)" },
+});
+if (!respT.ok) fail("transform (move) failed: " + respT.error);
+written = readFileSync(targetFile, "utf8");
+if (!written.includes("transform: translate(24px, -8px)")) {
+  fail("transform not written to <h1>: " + written.match(/<h1[^>]*>/)?.[0]);
+}
+
 // Mismatch check for style: stale previousStyle must be rejected.
 const resp7 = await send({
   type: "write-style",
@@ -226,9 +240,40 @@ const respA3 = await send({
 });
 if (respA3.ok) fail("javascript: URL was NOT rejected");
 
+// --- delete element -----------------------------------------------------
+
+// Mismatch guard: a wrong previousTag must be rejected (nothing deleted).
+const respD0 = await send({
+  type: "delete-element",
+  requestId: "e2e-d0",
+  target: { kind: "static-html", urlPath: "/", domPath: [1, 1, 2] }, // the <section>
+  previousTag: "p", // wrong - it is a <section>
+});
+if (respD0.ok) fail("delete with a mismatched previousTag was NOT rejected");
+
+// Delete the <section>: it and its contents vanish, siblings stay, and no
+// blank indented line is left behind.
+const respD1 = await send({
+  type: "delete-element",
+  requestId: "e2e-d1",
+  target: { kind: "static-html", urlPath: "/", domPath: [1, 1, 2] },
+  previousTag: "section",
+});
+if (!respD1.ok) fail("delete failed: " + respD1.error);
+written = readFileSync(targetFile, "utf8");
+if (written.includes("<section>") || written.includes("<h2>About</h2>")) {
+  fail("deleted <section> still present in index.html");
+}
+if (!written.match(/<h1[^>]*>/) || !written.includes("<footer>")) {
+  fail("delete removed more than the target element");
+}
+if (written.split("\n").some((l) => /^\s+$/.test(l))) {
+  fail("delete left a blank indented line behind");
+}
+
 ws.close();
 child.kill();
 writeFileSync(targetFile, original);
 console.log(
-  "PASS (static): text edit + escaping + traversal reject + bad-token reject + style insert (bare/with-attrs) + style patch + style mismatch reject + attr insert/patch + js-url reject",
+  "PASS (static): text edit + escaping + traversal reject + bad-token reject + style insert (bare/with-attrs) + style patch + transform (move) + style mismatch reject + attr insert/patch + js-url reject + delete (mismatch reject + clean removal)",
 );

@@ -93,7 +93,7 @@
   }
 
   chrome.runtime.onMessage.addListener(
-    (message: FroedeRuntimeMessage, sender, sendResponse) => {
+    (message: FroedeRuntimeMessage, _sender, sendResponse) => {
       if (message.kind === "froede-write") {
         (async () => {
           try {
@@ -103,12 +103,10 @@
               previousText: message.previousText,
               newText: message.newText,
             });
+            // froede already applied the change to the DOM optimistically
+            // (and reverts on failure), so there's no reload here: reloading a
+            // static page would restart the content script and drop edit mode.
             const ok = result.ok === true;
-            // Static pages have no HMR pipeline; reload the tab to reflect
-            // the saved file. React/Vite refreshes itself via HMR.
-            if (ok && message.target.kind === "static-html" && sender.tab?.id != null) {
-              chrome.tabs.reload(sender.tab.id);
-            }
             sendResponse({
               ok,
               file: typeof result.file === "string" ? result.file : undefined,
@@ -135,9 +133,6 @@
               newValue: message.newValue,
             });
             const ok = result.ok === true;
-            if (ok && message.target.kind === "static-html" && sender.tab?.id != null) {
-              chrome.tabs.reload(sender.tab.id);
-            }
             sendResponse({
               ok,
               file: typeof result.file === "string" ? result.file : undefined,
@@ -163,11 +158,31 @@
               style: message.style,
             });
             const ok = result.ok === true;
-            if (ok && message.target.kind === "static-html" && sender.tab?.id != null) {
-              chrome.tabs.reload(sender.tab.id);
-            }
             sendResponse({
               ok,
+              file: typeof result.file === "string" ? result.file : undefined,
+              error: typeof result.error === "string" ? result.error : undefined,
+            } satisfies FroedeWriteResponse);
+          } catch (err) {
+            sendResponse({
+              ok: false,
+              error: err instanceof Error ? err.message : String(err),
+            } satisfies FroedeWriteResponse);
+          }
+        })();
+        return true;
+      }
+
+      if (message.kind === "froede-delete") {
+        (async () => {
+          try {
+            const result = await request({
+              type: "delete-element",
+              target: message.target,
+              previousTag: message.previousTag,
+            });
+            sendResponse({
+              ok: result.ok === true,
               file: typeof result.file === "string" ? result.file : undefined,
               error: typeof result.error === "string" ? result.error : undefined,
             } satisfies FroedeWriteResponse);

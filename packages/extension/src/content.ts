@@ -12,6 +12,11 @@
   let selectedEl: HTMLElement | null = null;
   let overlayRoot: HTMLElement | null = null;
   let currentReposition: (() => void) | null = null;
+  // Set right after a drag so the click that follows the mouseup doesn't
+  // re-select or deselect the element we just moved.
+  let suppressClick = false;
+  let guideV: HTMLElement | null = null;
+  let guideH: HTMLElement | null = null;
 
   chrome.runtime.onMessage.addListener(
     (message: FroedeToggleMessage, _sender, sendResponse) => {
@@ -32,14 +37,15 @@
     injectStyle();
     document.addEventListener("mouseover", onMouseOver, true);
     document.addEventListener("mouseout", onMouseOut, true);
+    document.addEventListener("mousedown", onMouseDown, true);
     document.addEventListener("click", onClick, true);
     document.addEventListener("dblclick", onDblClick, true);
     document.addEventListener("keydown", onKeyDown, true);
     window.addEventListener("scroll", onReposition, true);
     window.addEventListener("resize", onReposition);
     toast(
-      "froede: edit mode ON - click to select, double-click text to edit, Shift+drag a handle to resize on one axis (Esc to exit)",
-      4200,
+      "froede: edit mode ON - click to select, drag to move, double-click text to edit, drag a corner to resize, Backspace to delete (Esc to exit)",
+      4600,
     );
   }
 
@@ -47,8 +53,10 @@
     picking = false;
     clearHover();
     deselect();
+    hideGuides();
     document.removeEventListener("mouseover", onMouseOver, true);
     document.removeEventListener("mouseout", onMouseOut, true);
+    document.removeEventListener("mousedown", onMouseDown, true);
     document.removeEventListener("click", onClick, true);
     document.removeEventListener("dblclick", onDblClick, true);
     document.removeEventListener("keydown", onKeyDown, true);
@@ -80,6 +88,12 @@
         cursor: nwse-resize;
       }
       .froede-handle-ne, .froede-handle-sw { cursor: nesw-resize; }
+      .froede-guide {
+        position: fixed; z-index: 2147483646; background: #e5006e;
+        pointer-events: none; display: none;
+      }
+      .froede-guide-v { width: 1px; top: 0; bottom: 0; }
+      .froede-guide-h { height: 1px; left: 0; right: 0; }
 
       .froede-panel, .froede-panel * { box-sizing: border-box; }
       .froede-panel {
@@ -228,8 +242,19 @@
   // ---- keyboard ------------------------------------------------------------
 
   function onKeyDown(event: KeyboardEvent): void {
+    if (paused) return; // text-edit / drag own their keys
+
+    if (event.key === "Backspace" || event.key === "Delete") {
+      // Only when an element is selected, and never while typing in a field
+      // (panel inputs, a contenteditable) so Backspace still edits text there.
+      if (!selectedEl || isTypingTarget(event.target)) return;
+      event.preventDefault();
+      event.stopPropagation();
+      deleteSelected(selectedEl);
+      return;
+    }
+
     if (event.key !== "Escape") return;
-    if (paused) return; // text-edit / drag own Escape themselves
     event.preventDefault();
     event.stopPropagation();
     if (selectedEl) {
@@ -239,9 +264,58 @@
     disable();
   }
 
+  function isTypingTarget(t: EventTarget | null): boolean {
+    if (!(t instanceof HTMLElement)) return false;
+    if (/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)) return true;
+    return t.isContentEditable;
+  }
+
+  function deleteSelected(el: HTMLElement): void {
+    const target = resolveTarget(el);
+    if (!target) {
+      toast(
+        "froede: this element is not mapped to source (no data-froede-loc - is vite-plugin-froede installed?)",
+      );
+      return;
+    }
+    const previousTag = el.tagName.toLowerCase();
+    // Optimistic: swap the element for a placeholder comment now, restore it if
+    // the companion write fails. The comment holds the slot without counting as
+    // an element child, so sibling domPaths stay valid until it's confirmed.
+    const placeholder = document.createComment("froede-deleted");
+    deselect();
+    clearHover();
+    el.replaceWith(placeholder);
+    chrome.runtime.sendMessage(
+      {
+        kind: "froede-delete",
+        target,
+        previousTag,
+      } satisfies FroedeRuntimeMessage,
+      (response: FroedeWriteResponse | undefined) => {
+        if (response?.ok) {
+          placeholder.remove();
+          toast(`froede: deleted <${previousTag}> from ${response.file ?? "source"}`);
+        } else {
+          placeholder.replaceWith(el);
+          toast(
+            `froede: ${response?.error ?? "no response from the extension background"}`,
+            4200,
+          );
+        }
+      },
+    );
+  }
+
   // ---- select / click ------------------------------------------------------
 
   function onClick(event: MouseEvent): void {
+    if (suppressClick) {
+      suppressClick = false;
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
     if (paused) return;
     if (isUiEl(event.target)) return;
     const el = selectableEl(event.target);
@@ -249,6 +323,137 @@
     event.preventDefault();
     event.stopPropagation();
     select(el);
+  }
+
+  // ---- drag to move ---------------------------------------------------------
+
+  function onMouseDown(event: MouseEvent): void {
+    if (paused || event.button !== 0) return;
+    if (isUiEl(event.target)) return; // handles and panel own their mousedown
+    if (!selectedEl) return;
+    const t = event.target;
+    if (!(t instanceof Node) || !selectedEl.contains(t)) return;
+    startMove(event, selectedEl);
+  }
+
+  function parseTranslate(transform: string): { x: number; y: number } {
+    const m = transform.match(
+      /translate\(\s*(-?\d+(?:\.\d+)?)px\s*,\s*(-?\d+(?:\.\d+)?)px\s*\)/,
+    );
+    return m ? { x: parseFloat(m[1]!), y: parseFloat(m[2]!) } : { x: 0, y: 0 };
+  }
+
+  function startMove(event: MouseEvent, el: HTMLElement): void {
+    const target = resolveTarget(el);
+    if (!target) return;
+    event.preventDefault();
+    const startX = event.clientX;
+    const startY = event.clientY;
+    const previousTransform = el.style.getPropertyValue("transform");
+    const base = parseTranslate(previousTransform);
+    const container = el.parentElement ?? document.body;
+    const SNAP = 6;
+    let moved = false;
+    paused = true;
+
+    const onMove = (e: MouseEvent): void => {
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+      // A few pixels of slop before it counts as a drag, so a plain click to
+      // select doesn't nudge the element.
+      if (!moved && Math.abs(dx) + Math.abs(dy) < 4) return;
+      moved = true;
+      // Shift locks to the axis being dragged further, like the resize handles.
+      const lockY = e.shiftKey && Math.abs(dx) >= Math.abs(dy);
+      const lockX = e.shiftKey && !lockY;
+      let nx = Math.round(base.x + (lockX ? 0 : dx));
+      let ny = Math.round(base.y + (lockY ? 0 : dy));
+      el.style.setProperty("transform", `translate(${nx}px, ${ny}px)`);
+
+      // Snap the element's center to its container's center and show a guide,
+      // like Canva/Figma. Hold Alt to move freely with no snapping.
+      let guideX: number | null = null;
+      let guideY: number | null = null;
+      if (!e.altKey) {
+        const pr = container.getBoundingClientRect();
+        const er = el.getBoundingClientRect();
+        const cxDiff = pr.left + pr.width / 2 - (er.left + er.width / 2);
+        const cyDiff = pr.top + pr.height / 2 - (er.top + er.height / 2);
+        if (!lockX && Math.abs(cxDiff) <= SNAP) {
+          nx = Math.round(nx + cxDiff);
+          guideX = pr.left + pr.width / 2;
+        }
+        if (!lockY && Math.abs(cyDiff) <= SNAP) {
+          ny = Math.round(ny + cyDiff);
+          guideY = pr.top + pr.height / 2;
+        }
+        if (guideX !== null || guideY !== null) {
+          el.style.setProperty("transform", `translate(${nx}px, ${ny}px)`);
+        }
+      }
+      showGuides(guideX, guideY);
+      currentReposition?.();
+    };
+
+    const onUp = (): void => {
+      document.removeEventListener("mousemove", onMove, true);
+      document.removeEventListener("mouseup", onUp, true);
+      hideGuides();
+      paused = false;
+      if (!moved) return; // it was a click, not a drag - leave selection alone
+      suppressClick = true;
+      const value = el.style.getPropertyValue("transform");
+      sendStyleWrite(
+        el,
+        target,
+        { transform: value },
+        { transform: previousTransform },
+        () => {
+          if (previousTransform) el.style.setProperty("transform", previousTransform);
+          else el.style.removeProperty("transform");
+          currentReposition?.();
+        },
+      );
+    };
+
+    document.addEventListener("mousemove", onMove, true);
+    document.addEventListener("mouseup", onUp, true);
+  }
+
+  function ensureGuides(): void {
+    if (!guideV) {
+      guideV = document.createElement("div");
+      guideV.className = "froede-guide froede-guide-v";
+      guideV.setAttribute("data-froede-ui", "");
+      document.documentElement.appendChild(guideV);
+    }
+    if (!guideH) {
+      guideH = document.createElement("div");
+      guideH.className = "froede-guide froede-guide-h";
+      guideH.setAttribute("data-froede-ui", "");
+      document.documentElement.appendChild(guideH);
+    }
+  }
+
+  function showGuides(x: number | null, y: number | null): void {
+    ensureGuides();
+    if (x !== null) {
+      guideV!.style.left = `${x}px`;
+      guideV!.style.display = "block";
+    } else {
+      guideV!.style.display = "none";
+    }
+    if (y !== null) {
+      guideH!.style.top = `${y}px`;
+      guideH!.style.display = "block";
+    } else {
+      guideH!.style.display = "none";
+    }
+  }
+
+  function hideGuides(): void {
+    if (guideV) guideV.style.display = "none";
+    if (guideH) guideH.style.display = "none";
   }
 
   function onDblClick(event: MouseEvent): void {

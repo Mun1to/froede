@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "froede",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "description": "front + edit + code - click on your localhost page and the change lands in your real source files.",
   "icons": {
     "16": "icons/icon16.png",

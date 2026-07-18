@@ -8,17 +8,19 @@ import {
 import { publicErrorMessage } from "./errors.js";
 import {
   applyReactAttrEdit,
+  applyReactDelete,
   applyReactStyleEdit,
   applyReactTextEdit,
 } from "./targets/reactSource.js";
 import {
   applyStaticAttrEdit,
+  applyStaticDelete,
   applyStaticStyleEdit,
   applyStaticTextEdit,
 } from "./targets/staticHtml.js";
 import { tokensMatch } from "./token.js";
 
-export const COMPANION_VERSION = "0.3.2";
+export const COMPANION_VERSION = "0.4.0";
 
 export interface CompanionServer {
   close(): Promise<void>;
@@ -138,7 +140,7 @@ export async function startServer(options: {
                 previousStyle: msg.previousStyle,
                 style: msg.style,
               });
-      } else {
+      } else if (msg.type === "write-attr") {
         result =
           target.kind === "react"
             ? await applyReactAttrEdit({
@@ -157,6 +159,22 @@ export async function startServer(options: {
                 name: msg.name,
                 previousValue: msg.previousValue,
                 newValue: msg.newValue,
+              });
+      } else {
+        result =
+          target.kind === "react"
+            ? await applyReactDelete({
+                root: options.root,
+                file: target.file,
+                line: target.line,
+                column: target.column,
+                previousTag: msg.previousTag,
+              })
+            : await applyStaticDelete({
+                root: options.root,
+                urlPath: target.urlPath,
+                domPath: target.domPath,
+                previousTag: msg.previousTag,
               });
       }
 

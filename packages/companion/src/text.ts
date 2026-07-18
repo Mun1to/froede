@@ -22,6 +22,28 @@ export function escapeJsxAttr(s: string): string {
 }
 
 /**
+ * Removes [start, end) from `source`, plus the element's own-line whitespace:
+ * the leading indentation back to the previous newline (only when nothing but
+ * whitespace precedes the element on that line) and one trailing line break.
+ * That keeps a deleted element from leaving an empty, indented line behind,
+ * while an element sharing its line with siblings only loses itself.
+ */
+export function deleteRangeOnItsLine(
+  source: string,
+  start: number,
+  end: number,
+): string {
+  let from = start;
+  let to = end;
+  let i = start;
+  while (i > 0 && (source[i - 1] === " " || source[i - 1] === "\t")) i--;
+  if (i === 0 || source[i - 1] === "\n") from = i;
+  if (source[to] === "\r" && source[to + 1] === "\n") to += 2;
+  else if (source[to] === "\n") to += 1;
+  return source.slice(0, from) + source.slice(to);
+}
+
+/**
  * Replaces [start, end) of `source` with `replacement`, preserving the
  * original leading/trailing whitespace of the replaced range (indentation,
  * newlines) so diffs stay minimal.
