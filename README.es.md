@@ -9,7 +9,7 @@
 
 **front + edit + code.** Un toolkit ligero para editar el código detrás de una web o app en ejecución haciendo clic en lo que ves - sin bucear en el código fuente, sin necesitar un IDE completo.
 
-[![npm](https://img.shields.io/npm/v/froede)](https://www.npmjs.com/package/froede) [![license](https://img.shields.io/npm/l/froede)](LICENSE)
+[![npm](https://img.shields.io/npm/v/froede)](https://www.npmjs.com/package/froede) [![license](https://img.shields.io/npm/l/froede)](LICENSE) [![Chrome Web Store](https://img.shields.io/badge/Chrome%20Web%20Store-pronto-4285F4?logo=googlechrome&logoColor=white)](https://github.com/Mun1to/froede/releases/latest)
 
 > **Estado: publicado en npm** (versión actual en el badge de arriba). Texto, tamaño, color, tipografía, espaciado y atributos (alt, href, placeholder, src, title) editan de punta a punta en ambos targets (HTML estático y React + Vite), verificado contra archivos reales. También puedes **arrastrar elementos para moverlos** (con guías de centrado, tipo Canva) y **borrarlos** con Backspace. Las herramientas de layout completas y las animaciones siguen en el roadmap. **En revisión para la Chrome Web Store** - hasta que aparezca allí, el quickstart de abajo cubre la instalación manual.
 
