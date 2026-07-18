@@ -63,6 +63,14 @@ Guía completa, con un prompt listo para pegarle a tu asistente de IA: [`docs/IN
 
 v0.4 edita texto plano visible, tamaño/color/tipografía/espaciado inline, y un allowlist seguro de atributos (href/src rechazan URLs de tipo script), y añade lo básico de layout - arrastrar para mover (con guías de centrado) y borrar. Duplicar elementos y las animaciones siguen en el roadmap.
 
+## Con Claude Code (o cualquier asistente de IA)
+
+froede incluye un skill de [Claude Code](https://claude.com/claude-code) que lo arranca por ti: detecta si es HTML estático o React/Vite, levanta el companion y te guía para emparejar y editar. Copia [`.claude/skills/froede/`](.claude/skills/froede/SKILL.md) en tu propio `~/.claude/skills/` y luego solo di *"arranca froede aquí"* en cualquier proyecto.
+
+¿Sin skill? Pega esto en tu sesión de IA:
+
+> Configura froede (github.com/Mun1to/froede) para editar mi página de localhost haciendo clic. Detecta si es HTML estático o React/Vite (corre `npx froede init` una vez si es Vite), arranca el companion con `npx froede`, dame el puerto y el token para el popup de la extensión, y guíame para editar: clic para seleccionar, doble clic para texto, arrastrar para mover, Backspace para borrar; deshacer con `git diff`.
+
 ## Panorama (a mediados de 2026)
 
 Antes de empezar, investigamos si ya existía algo así:

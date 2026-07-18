@@ -75,6 +75,14 @@ Full walkthrough, including a ready-to-paste prompt for your AI coding session: 
 
 v0.4 edits plain visible text, inline size/color/typography/spacing, and a safe allowlist of attributes (href/src reject script-scheme URLs), and adds layout basics - drag to move (with center-snap guides) and delete. Duplicating elements and animations are still on the roadmap.
 
+## With Claude Code (or any AI assistant)
+
+froede ships a [Claude Code](https://claude.com/claude-code) skill that spins it up for you: it detects static HTML vs React/Vite, starts the companion, and walks you through pairing and editing. Copy [`.claude/skills/froede/`](.claude/skills/froede/SKILL.md) into your own `~/.claude/skills/`, then just say *"start froede here"* in any project.
+
+No skill? Paste this into your AI session:
+
+> Set up froede (github.com/Mun1to/froede) to edit my localhost page by clicking. Detect static HTML vs React/Vite (run `npx froede init` once if Vite), start the companion with `npx froede`, give me the port and token for the extension popup, and guide me to edit: click to select, double-click for text, drag to move, Backspace to delete; undo with `git diff`.
+
 ## Landscape (as of mid-2026)
 
 Before starting, we looked for anything that already does this:
