@@ -1,46 +1,40 @@
-# Generates the extension icon PNGs (16/32/48/128) mirroring
-# docs/brand/froede-logo.svg: indigo rounded square, selection frame,
-# amber corner handles, text caret. Draws at 512px and downscales.
+# Generates the extension icon PNGs (16/32/48/128) from the master logo
+# at docs/brand/froede_logo_png.png. The master canvas has margin around
+# the mark (fine for a README image), so this crops to the actual content
+# bounding box, pads it back to a square with the same background color
+# (no stretching), then downscales - giving a full-bleed icon that stays
+# legible at 16px instead of a tiny mark floating in a large white frame.
 import os
-from PIL import Image, ImageDraw
+from collections import Counter
+from PIL import Image
+import numpy as np
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+SOURCE = os.path.join(HERE, "..", "docs", "brand", "froede_logo_png.png")
 OUT = os.path.join(HERE, "..", "packages", "extension", "static", "icons")
 os.makedirs(OUT, exist_ok=True)
 
-S = 512
-img = Image.new("RGBA", (S, S), (0, 0, 0, 0))
-d = ImageDraw.Draw(img)
+img = Image.open(SOURCE).convert("RGB")
+arr = np.array(img)
 
-# background: vertical-ish gradient indigo-900 -> indigo-950, then mask to rounded rect
-grad = Image.new("RGBA", (S, S))
-gd = ImageDraw.Draw(grad)
-top, bottom = (49, 46, 129, 255), (30, 27, 75, 255)
-for y in range(S):
-    t = y / (S - 1)
-    gd.line(
-        [(0, y), (S, y)],
-        fill=tuple(int(a + (b - a) * t) for a, b in zip(top, bottom)),
-    )
-mask = Image.new("L", (S, S), 0)
-ImageDraw.Draw(mask).rounded_rectangle([16, 16, 496, 496], radius=112, fill=255)
-img.paste(grad, (0, 0), mask)
+# The two most common colors in the source are the canvas margin and the
+# solid square fill behind the mark (in that order) - far more reliable
+# than sampling a single pixel, which can land on a rounded corner or the
+# ring stroke.
+counts = Counter(img.getdata())
+canvas_bg, mark_color = (c for c, _ in counts.most_common(2))
 
-# selection frame
-d.rounded_rectangle([136, 164, 376, 348], radius=22, outline=(129, 140, 248, 255), width=16)
-# text caret
-d.rounded_rectangle([242, 204, 270, 308], radius=14, fill=(224, 231, 255, 255))
-# corner handles
-for cx, cy in [(136, 164), (376, 164), (136, 348), (376, 348)]:
-    d.rounded_rectangle(
-        [cx - 24, cy - 24, cx + 24, cy + 24],
-        radius=12,
-        fill=(245, 158, 11, 255),
-        outline=(30, 27, 75, 255),
-        width=10,
-    )
+dist = np.abs(arr.astype(int) - np.array(canvas_bg)).sum(axis=2)
+content = dist > 40  # anything far enough from the canvas background color
+ys, xs = np.where(content)
+x0, x1, y0, y1 = xs.min(), xs.max() + 1, ys.min(), ys.max() + 1
+cropped = img.crop((x0, y0, x1, y1))
+
+side = max(cropped.width, cropped.height)
+square = Image.new("RGB", (side, side), mark_color)
+square.paste(cropped, ((side - cropped.width) // 2, (side - cropped.height) // 2))
 
 for size in (16, 32, 48, 128):
-    img.resize((size, size), Image.LANCZOS).save(os.path.join(OUT, f"icon{size}.png"))
+    square.resize((size, size), Image.LANCZOS).save(os.path.join(OUT, f"icon{size}.png"))
     print(f"icon{size}.png")
 print("done ->", os.path.normpath(OUT))

@@ -1,4 +1,4 @@
-<p align="center"><img src="docs/brand/froede-logo.svg" width="110" alt="froede logo"></p>
+<p align="center"><img src="docs/brand/froede_logo_png.png" width="110" alt="froede logo"></p>
 
 # froede
 
@@ -24,7 +24,7 @@ Click any element to select it - resize handles appear on its corners (Shift+dra
 
 ## Is it safe?
 
-froede edits files on your computer, so this matters: everything runs **locally** (no cloud, no account, no telemetry, no AI), the part that writes files can only touch the one folder you point it at, and every piece is explained in normal words in [SECURITY.md](SECURITY.md) - including what froede can *never* do. Your undo is always `git diff`.
+froede edits files on your computer, so this matters: everything runs **locally** (no cloud, no account, no telemetry, no AI), the part that writes files can only touch the one folder you point it at, and every piece is explained in normal words in [SECURITY.md](SECURITY.md) - including what froede can *never* do. Your undo is always `git diff`. The extension's [Privacy Policy](PRIVACY.md) covers exactly what data it does (and does not) touch.
 
 ## How it works
 

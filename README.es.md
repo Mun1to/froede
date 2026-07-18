@@ -1,4 +1,4 @@
-<p align="center"><img src="docs/brand/froede-logo.svg" width="110" alt="logo de froede"></p>
+<p align="center"><img src="docs/brand/froede_logo_png.png" width="110" alt="logo de froede"></p>
 
 # froede
 
