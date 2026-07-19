@@ -1,8 +1,5 @@
 <p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/brand/froede_logoclaro.svg">
-    <img src="docs/brand/froede_logooscuro.svg" width="110" alt="froede logo">
-  </picture>
+  <img src="docs/brand/froede_logo.png" width="130" alt="froede logo">
 </p>
 
 # froede
