@@ -2,8 +2,9 @@
 // against examples/static-site, connects like the extension would, edits
 // text and style, verifies the file on disk, then restores it.
 import { spawn } from "node:child_process";
-import { readFileSync, writeFileSync } from "node:fs";
+import { readFileSync, unlinkSync, writeFileSync } from "node:fs";
 import http from "node:http";
+import { createRequire } from "node:module";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -21,7 +22,28 @@ if (typeof WebSocket === "undefined") {
 
 const targetFile = path.join(exampleDir, "index.html");
 const original = readFileSync(targetFile, "utf8");
-writeFileSync(path.join(exampleDir, ".froede-token"), TOKEN + "\n");
+const tokenFile = path.join(exampleDir, ".froede-token");
+// This example doubles as a manual-testing fixture, so a fixed test token
+// left behind here after the run would silently override whatever real
+// token a person is pairing with. Restore whatever was there (or remove the
+// file if there was nothing) instead of leaving "e2e000...0" behind forever.
+let previousToken = null;
+try {
+  previousToken = readFileSync(tokenFile, "utf8");
+} catch {
+  // no pre-existing token file - fine, restoreToken() below will remove ours
+}
+writeFileSync(tokenFile, TOKEN + "\n");
+function restoreToken() {
+  if (previousToken !== null) writeFileSync(tokenFile, previousToken);
+  else {
+    try {
+      unlinkSync(tokenFile);
+    } catch {
+      // already gone - fine
+    }
+  }
+}
 
 const child = spawn(process.execPath, [cli, "--port", String(PORT)], {
   cwd: exampleDir,
@@ -32,6 +54,7 @@ const fail = (msg) => {
   console.error("FAIL (static):", msg);
   child.kill();
   writeFileSync(targetFile, original);
+  restoreToken();
   process.exit(1);
 };
 
@@ -102,18 +125,71 @@ function probeOrigin(origin) {
     req.end();
   });
 }
-const storeOrigin = await probeOrigin(
-  "chrome-extension://clfpgnbnfgaabdoiadjfkhfhmnfemeba",
-);
-if (storeOrigin !== 101) {
-  fail("the froede extension Origin was NOT accepted (got " + storeOrigin + ")");
-}
-const otherExtOrigin = await probeOrigin(
-  "chrome-extension://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-);
-if (otherExtOrigin === 101) fail("a different extension Origin was NOT rejected");
+// A web page gets no upgrade at all: it should not even learn a companion is
+// here, and it has no legitimate reason to connect.
 const pageOrigin = await probeOrigin("http://evil.example");
 if (pageOrigin === 101) fail("a web-page Origin was NOT rejected");
+
+// An extension, on the other hand, must be TOLD why it was turned away: a
+// pre-upgrade status is invisible to the browser's WebSocket API, so the
+// companion completes the handshake and closes with a specific code. This is
+// the whole point - the popup used to blame the token and the process, the
+// only two things that were fine.
+const STORE_ID = "clfpgnbnfgaabdoiadjfkhfhmnfemeba";
+const requireFromCompanion = createRequire(
+  path.join(repo, "packages", "companion", "package.json"),
+);
+const { WebSocket: WsClient } = requireFromCompanion("ws");
+
+/** Connects the way the extension does (with an Origin) and reports how it ended. */
+function probeExtension(origin, tokenValue) {
+  return new Promise((resolve) => {
+    const client = new WsClient(`ws://127.0.0.1:${PORT}/?token=${tokenValue}`, {
+      origin,
+    });
+    const timer = setTimeout(() => {
+      client.terminate();
+      resolve({ outcome: "open" }); // still up after a beat: accepted
+    }, 400);
+    client.on("close", (code, reason) => {
+      clearTimeout(timer);
+      resolve({ outcome: "closed", code, reason: String(reason) });
+    });
+    client.on("error", () => {
+      clearTimeout(timer);
+      resolve({ outcome: "error" });
+    });
+  });
+}
+
+// (c) unknown extension id -> its own code, carrying the id so the popup can
+// print the exact command that authorises it.
+const unknownExt = await probeExtension(
+  "chrome-extension://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  TOKEN,
+);
+if (unknownExt.outcome !== "closed" || unknownExt.code !== 4403) {
+  fail("unknown extension was not closed with 4403: " + JSON.stringify(unknownExt));
+}
+if (!unknownExt.reason.includes("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")) {
+  fail("the 4403 close reason does not carry the extension id: " + unknownExt.reason);
+}
+
+// (b) trusted extension but stale token -> a DIFFERENT code, so the popup
+// stops blaming the token when the token is not the problem, and vice versa.
+const badTokenExt = await probeExtension(`chrome-extension://${STORE_ID}`, "wrong");
+if (badTokenExt.outcome !== "closed" || badTokenExt.code !== 4401) {
+  fail("stale token was not closed with 4401: " + JSON.stringify(badTokenExt));
+}
+if (badTokenExt.code === unknownExt.code) {
+  fail("the two rejection reasons are indistinguishable");
+}
+
+// The happy path still connects and stays connected.
+const okExt = await probeExtension(`chrome-extension://${STORE_ID}`, TOKEN);
+if (okExt.outcome !== "open") {
+  fail("the store extension could not connect: " + JSON.stringify(okExt));
+}
 
 // --- text edit ---------------------------------------------------------
 
@@ -318,6 +394,7 @@ if (written.split("\n").some((l) => /^\s+$/.test(l))) {
 ws.close();
 child.kill();
 writeFileSync(targetFile, original);
+restoreToken();
 console.log(
-  "PASS (static): text edit + escaping + traversal reject + bad-token reject + origin allowlist (store ok / other-ext + web rejected) + style insert (bare/with-attrs) + style patch + transform (move) + style mismatch reject + attr insert/patch + js-url reject + delete (mismatch reject + clean removal)",
+  "PASS (static): text edit + escaping + traversal reject + bad-token reject + rejection codes (4403 unknown-ext carries id / 4401 stale-token / web gets no upgrade / store ext connects) + style insert (bare/with-attrs) + style patch + transform (move) + style mismatch reject + attr insert/patch + js-url reject + delete (mismatch reject + clean removal)",
 );

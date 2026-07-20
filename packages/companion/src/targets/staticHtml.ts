@@ -2,6 +2,7 @@ import { promises as fs } from "node:fs";
 import { parse } from "parse5";
 import { FroedeError } from "../errors.js";
 import { resolveInsideRoot } from "../fsGuard.js";
+import { writeTracked } from "../history.js";
 import { deleteRangeOnItsLine, escapeHtmlAttr, escapeHtmlText, normalizeText, spliceKeepingPadding } from "../text.js";
 import { parseStyleAttr, serializeStyleAttr } from "../styleAttr.js";
 
@@ -118,7 +119,7 @@ export async function applyStaticTextEdit(options: {
     loc.endOffset,
     escapeHtmlText(options.newText),
   );
-  await fs.writeFile(absFile, updated, "utf8");
+  await writeTracked(absFile, source, updated);
   return { file: relFile };
 }
 
@@ -170,7 +171,7 @@ export async function applyStaticStyleEdit(options: {
     ? source.slice(0, styleAttrLoc.startOffset) + attrText + source.slice(styleAttrLoc.endOffset)
     : insertNewAttr(source, startTag, attrText);
 
-  await fs.writeFile(absFile, updated, "utf8");
+  await writeTracked(absFile, source, updated);
   return { file: relFile };
 }
 
@@ -205,7 +206,7 @@ export async function applyStaticAttrEdit(options: {
     ? source.slice(0, attrLoc.startOffset) + attrText + source.slice(attrLoc.endOffset)
     : insertNewAttr(source, startTag, attrText);
 
-  await fs.writeFile(absFile, updated, "utf8");
+  await writeTracked(absFile, source, updated);
   return { file: relFile };
 }
 
@@ -228,6 +229,6 @@ export async function applyStaticDelete(options: {
     );
   }
   const updated = deleteRangeOnItsLine(source, loc.startOffset, loc.endOffset);
-  await fs.writeFile(absFile, updated, "utf8");
+  await writeTracked(absFile, source, updated);
   return { file: relFile };
 }

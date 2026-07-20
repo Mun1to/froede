@@ -3,7 +3,7 @@ import { parseArgs } from "node:util";
 import path from "node:path";
 import { runInit } from "./init.js";
 import { COMPANION_VERSION, startServer } from "./server.js";
-import { ensureTokenIgnored, loadOrCreateToken } from "./token.js";
+import { ensureTokenIgnored, findGitRoot, loadOrCreateToken } from "./token.js";
 
 export const DEFAULT_PORT = 4519;
 
@@ -48,6 +48,10 @@ if (!Number.isInteger(port) || port < 1 || port > 65535) {
 
 const { token, created } = await loadOrCreateToken(root);
 const ignored = await ensureTokenIgnored(root);
+// Shown explicitly: froede's undo is `git diff`, so the user needs to know
+// whether that safety net is actually there (it lives above the cwd in a
+// monorepo, which froede used to miss entirely).
+const gitRoot = await findGitRoot(root);
 try {
   await startServer({
     root,
@@ -75,6 +79,7 @@ const ignoreNote =
 
 console.log(`froede companion v${COMPANION_VERSION}
   project root: ${root}
+  git repo:     ${gitRoot ?? "none found - git diff is froede's undo, consider git init"}
   listening:    ws://127.0.0.1:${port}
   token:        ${token}
 

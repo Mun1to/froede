@@ -4,6 +4,13 @@
 // companion directly - see background.ts).
 (() => {
   const STYLE_ID = "froede-style";
+  /**
+   * How far the pointer must travel before a press counts as a drag. A plain
+   * click carries a pixel or two of hand tremor, and writing that to disk
+   * produced real diffs like `transform: translate(2px, 0px)` from a click
+   * that never meant to move anything.
+   */
+  const DRAG_DEAD_ZONE = 5;
   let picking = false;
   // true while text-editing or mid-drag: suppresses hover/select/Escape so
   // those flows own the mouse/keyboard until they finish.
@@ -54,6 +61,7 @@
     clearHover();
     deselect();
     hideGuides();
+    removeHistoryBadge();
     document.removeEventListener("mouseover", onMouseOver, true);
     document.removeEventListener("mouseout", onMouseOut, true);
     document.removeEventListener("mousedown", onMouseDown, true);
@@ -92,8 +100,36 @@
         position: fixed; z-index: 2147483646; background: #e5006e;
         pointer-events: none; display: none;
       }
-      .froede-guide-v { width: 1px; top: 0; bottom: 0; }
-      .froede-guide-h { height: 1px; left: 0; right: 0; }
+      .froede-guide-v { width: 1px; }
+      .froede-guide-h { height: 1px; }
+      .froede-badge {
+        position: fixed; left: 16px; bottom: 16px; z-index: 2147483646;
+        background: rgba(30,27,75,.9); color: #c7d2fe;
+        font: 11px/1.3 ui-monospace, SFMono-Regular, Menlo, monospace;
+        padding: 6px 10px; border-radius: 999px;
+        border: 1px solid rgba(129,140,248,.35);
+        pointer-events: none;
+      }
+
+      .froede-confirm {
+        position: fixed; inset: 0; z-index: 2147483647;
+        background: rgba(15, 12, 41, .55);
+        display: flex; align-items: center; justify-content: center;
+      }
+      .froede-confirm-box {
+        max-width: 380px; background: #1e1b4b; color: #e0e7ff;
+        font: 13px/1.5 -apple-system, system-ui, sans-serif; padding: 16px 18px;
+        border-radius: 12px; border: 1px solid rgba(129,140,248,.4);
+        box-shadow: 0 20px 50px rgba(0,0,0,.55);
+      }
+      .froede-confirm-box p { margin: 0 0 14px; }
+      .froede-confirm-actions { display: flex; gap: 8px; justify-content: flex-end; }
+      .froede-confirm-actions button {
+        padding: 6px 12px; border: 0; border-radius: 7px; cursor: pointer;
+        font: inherit; background: rgba(255,255,255,.1); color: #e0e7ff;
+      }
+      .froede-confirm-actions .froede-confirm-ok { background: #4f46e5; }
+      .froede-confirm-actions .froede-confirm-only { background: #b45309; }
 
       .froede-panel, .froede-panel * { box-sizing: border-box; }
       .froede-panel {
@@ -177,6 +213,18 @@
     return raw;
   }
 
+  /**
+   * Text blocks size themselves to their content. Pinning their height only
+   * clips or stretches them, and it is never what "make this a bit wider"
+   * meant, so froede leaves height alone for them.
+   */
+  function isTextBlock(el: HTMLElement): boolean {
+    if (/^(P|H1|H2|H3|H4|H5|H6|SPAN|A|LI|BLOCKQUOTE|LABEL|FIGCAPTION|STRONG|EM)$/.test(el.tagName)) {
+      return true;
+    }
+    return el.children.length === 0 && (el.textContent ?? "").trim() !== "";
+  }
+
   /** A leaf whose only meaningful content is one text node - text-editable. */
   function textEditableEl(el: HTMLElement): boolean {
     if (/^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName)) return false;
@@ -213,6 +261,121 @@
     return { kind: "static-html", urlPath: location.pathname, domPath };
   }
 
+  // ---- loop instances ------------------------------------------------------
+
+  /**
+   * How many live DOM nodes come from the same source location. The vite
+   * plugin stamps the JSX TEMPLATE, so every element rendered by a `.map()`
+   * shares one data-froede-loc: on screen they look independent, but in the
+   * file they are a single line. Editing "one" of them rewrites that line and
+   * changes all of them, which is never what the click meant.
+   */
+  function sharedNodeList(el: HTMLElement): NodeListOf<Element> | null {
+    const loc = el.getAttribute("data-froede-loc");
+    if (!loc) return null;
+    const escaped = loc.replace(/["\\]/g, "\\$&");
+    return document.querySelectorAll(`[data-froede-loc="${escaped}"]`);
+  }
+
+  function sharedInstances(el: HTMLElement): number {
+    return sharedNodeList(el)?.length ?? 1;
+  }
+
+  /**
+   * This occurrence's position among the shared-location nodes, in DOM order -
+   * which matches the array's iteration order for a plain top-to-bottom
+   * .map(), so it doubles as the loop index to isolate on the companion side.
+   */
+  function instanceIndex(el: HTMLElement): number {
+    const list = sharedNodeList(el);
+    return list ? Array.prototype.indexOf.call(list, el) : 0;
+  }
+
+  type SharedChoice = "all" | "only" | "cancel";
+
+  function confirmSharedEdit(
+    count: number,
+    what: string,
+    allowIsolate: boolean,
+  ): Promise<SharedChoice> {
+    return new Promise((resolve) => {
+      const wrap = document.createElement("div");
+      wrap.className = "froede-confirm";
+      wrap.setAttribute("data-froede-ui", "");
+      const box = document.createElement("div");
+      box.className = "froede-confirm-box";
+      const text = document.createElement("p");
+      text.textContent = allowIsolate
+        ? `This element is rendered ${count} times from the same line of source (a loop). Change just this one, or all ${count}?`
+        : `This element is rendered ${count} times from the same line of source (a loop), so ${what} will affect all ${count}.`;
+      const actions = document.createElement("div");
+      actions.className = "froede-confirm-actions";
+      const cancel = document.createElement("button");
+      cancel.type = "button";
+      cancel.textContent = "Cancel";
+      cancel.setAttribute("data-froede-ui", "");
+      const all = document.createElement("button");
+      all.type = "button";
+      all.className = "froede-confirm-ok";
+      all.textContent = `Change all ${count}`;
+      all.setAttribute("data-froede-ui", "");
+      actions.append(cancel);
+      let only: HTMLButtonElement | null = null;
+      if (allowIsolate) {
+        only = document.createElement("button");
+        only.type = "button";
+        only.className = "froede-confirm-only";
+        only.textContent = "Change only this one";
+        only.setAttribute("data-froede-ui", "");
+        actions.append(only);
+      }
+      actions.append(all);
+      box.append(text, actions);
+      wrap.appendChild(box);
+      document.documentElement.appendChild(wrap);
+      const done = (value: SharedChoice): void => {
+        wrap.remove();
+        resolve(value);
+      };
+      cancel.addEventListener("click", () => done("cancel"));
+      only?.addEventListener("click", () => done("only"));
+      all.addEventListener("click", () => done("all"));
+      wrap.addEventListener("click", (e) => {
+        if (e.target === wrap) done("cancel");
+      });
+      (only ?? all).focus();
+    });
+  }
+
+  /**
+   * Runs `proceed`, unless this element is one of N loop instances and the
+   * user backs out - then `onCancel` undoes whatever was applied
+   * optimistically. When the user picks "only this one", `proceed` receives
+   * this occurrence's index so the companion can isolate the edit to it;
+   * `allowIsolate=false` (used for delete) drops that third choice entirely,
+   * since isolating a delete would mean hiding one iteration rather than
+   * actually removing anything, a different and more confusing guarantee.
+   */
+  async function guardShared(
+    el: HTMLElement,
+    what: string,
+    proceed: (onlyInstance?: number) => void,
+    onCancel: () => void,
+    allowIsolate = true,
+  ): Promise<void> {
+    const count = sharedInstances(el);
+    if (count <= 1) {
+      proceed(undefined);
+      return;
+    }
+    const choice = await confirmSharedEdit(count, what, allowIsolate);
+    if (choice === "cancel") {
+      onCancel();
+      return;
+    }
+    proceed(choice === "only" ? instanceIndex(el) : undefined);
+  }
+
   // ---- hover -------------------------------------------------------------
 
   function onMouseOver(event: Event): void {
@@ -239,10 +402,68 @@
     hoverEl = null;
   }
 
+  // ---- history (undo / redo) -----------------------------------------------
+
+  let historyBadge: HTMLElement | null = null;
+
+  /** Shows how many steps are available, so undo is not a leap of faith. */
+  function updateHistoryBadge(undo?: number, redo?: number): void {
+    if (undo === undefined && redo === undefined) return;
+    if (!picking) return;
+    if (!historyBadge) {
+      historyBadge = document.createElement("div");
+      historyBadge.className = "froede-badge";
+      historyBadge.setAttribute("data-froede-ui", "");
+      document.documentElement.appendChild(historyBadge);
+    }
+    historyBadge.textContent = `froede: ${undo ?? 0} undo / ${redo ?? 0} redo`;
+  }
+
+  function removeHistoryBadge(): void {
+    historyBadge?.remove();
+    historyBadge = null;
+  }
+
+  function sendHistory(kind: "froede-undo" | "froede-redo"): void {
+    chrome.runtime.sendMessage(
+      { kind } satisfies FroedeRuntimeMessage,
+      (response: FroedeWriteResponse | undefined) => {
+        if (response?.ok) {
+          // The file just changed on disk and HMR will re-render, so any
+          // selection we still hold may point at a node about to be replaced.
+          deselect();
+          clearHover();
+          toast(
+            `froede: ${kind === "froede-undo" ? "undid" : "redid"} an edit in ${response.file ?? "source"}`,
+          );
+        } else {
+          toast(
+            `froede: ${response?.error ?? "no response from the extension background"}`,
+            4200,
+          );
+        }
+        updateHistoryBadge(response?.undoDepth, response?.redoDepth);
+      },
+    );
+  }
+
   // ---- keyboard ------------------------------------------------------------
 
   function onKeyDown(event: KeyboardEvent): void {
     if (paused) return; // text-edit / drag own their keys
+
+    // Ctrl/Cmd+Z and Ctrl+Shift+Z / Ctrl+Y drive froede's own history. While
+    // editing text in place `paused` is true, so the browser keeps its native
+    // undo inside the field, which is exactly where the user expects it.
+    if ((event.ctrlKey || event.metaKey) && !isTypingTarget(event.target)) {
+      const key = event.key.toLowerCase();
+      if (key === "z" || key === "y") {
+        event.preventDefault();
+        event.stopPropagation();
+        sendHistory(key === "y" || event.shiftKey ? "froede-redo" : "froede-undo");
+        return;
+      }
+    }
 
     if (event.key === "Backspace" || event.key === "Delete") {
       // Only when an element is selected, and never while typing in a field
@@ -279,31 +500,43 @@
       return;
     }
     const previousTag = el.tagName.toLowerCase();
-    // Optimistic: swap the element for a placeholder comment now, restore it if
-    // the companion write fails. The comment holds the slot without counting as
-    // an element child, so sibling domPaths stay valid until it's confirmed.
-    const placeholder = document.createComment("froede-deleted");
-    deselect();
-    clearHover();
-    el.replaceWith(placeholder);
-    chrome.runtime.sendMessage(
-      {
-        kind: "froede-delete",
-        target,
-        previousTag,
-      } satisfies FroedeRuntimeMessage,
-      (response: FroedeWriteResponse | undefined) => {
-        if (response?.ok) {
-          placeholder.remove();
-          toast(`froede: deleted <${previousTag}> from ${response.file ?? "source"}`);
-        } else {
-          placeholder.replaceWith(el);
-          toast(
-            `froede: ${response?.error ?? "no response from the extension background"}`,
-            4200,
-          );
-        }
+    // Asked BEFORE anything is touched: deleting one of N loop instances
+    // deletes the line that renders all of them.
+    void guardShared(
+      el,
+      "deleting it",
+      () => {
+        // Optimistic: swap the element for a placeholder comment now, restore it
+        // if the companion write fails. The comment holds the slot without
+        // counting as an element child, so sibling domPaths stay valid.
+        const placeholder = document.createComment("froede-deleted");
+        deselect();
+        clearHover();
+        el.replaceWith(placeholder);
+        chrome.runtime.sendMessage(
+          {
+            kind: "froede-delete",
+            target,
+            previousTag,
+          } satisfies FroedeRuntimeMessage,
+          (response: FroedeWriteResponse | undefined) => {
+            if (response?.ok) {
+              placeholder.remove();
+              toast(`froede: deleted <${previousTag}> from ${response.file ?? "source"}`);
+            } else {
+              placeholder.replaceWith(el);
+              toast(
+                `froede: ${response?.error ?? "no response from the extension background"}`,
+                4200,
+              );
+            }
+          },
+        );
       },
+      () => {},
+      // Isolating a delete would mean HIDING one iteration, not removing
+      // anything - a different guarantee than the others, so not offered here.
+      false,
     );
   }
 
@@ -351,17 +584,19 @@
     const startY = event.clientY;
     const previousTransform = el.style.getPropertyValue("transform");
     const base = parseTranslate(previousTransform);
-    const container = el.parentElement ?? document.body;
-    const SNAP = 6;
+    // Measured once: none of the candidates can move while we drag, so there
+    // is no reason to re-measure the DOM on every frame.
+    const snapTargets = collectSnapTargets(el);
+    const SNAP = 7;
     let moved = false;
     paused = true;
 
     const onMove = (e: MouseEvent): void => {
       const dx = e.clientX - startX;
       const dy = e.clientY - startY;
-      // A few pixels of slop before it counts as a drag, so a plain click to
-      // select doesn't nudge the element.
-      if (!moved && Math.abs(dx) + Math.abs(dy) < 4) return;
+      // Straight-line distance, not |dx|+|dy|: the sum trips at 2px+2px of
+      // diagonal tremor, which is still firmly "this was a click".
+      if (!moved && Math.hypot(dx, dy) < DRAG_DEAD_ZONE) return;
       moved = true;
       // Shift locks to the axis being dragged further, like the resize handles.
       const lockY = e.shiftKey && Math.abs(dx) >= Math.abs(dy);
@@ -370,24 +605,44 @@
       let ny = Math.round(base.y + (lockY ? 0 : dy));
       el.style.setProperty("transform", `translate(${nx}px, ${ny}px)`);
 
-      // Snap the element's center to its container's center and show a guide,
-      // like Canva/Figma. Hold Alt to move freely with no snapping.
-      let guideX: number | null = null;
-      let guideY: number | null = null;
+      // Align against the OTHER elements on screen (their edges and centres),
+      // like Figma, plus the parent's inner box. The guide is drawn spanning
+      // both, so it is obvious WHO it is lining up with. Alt = no snapping.
+      let guideX: SnapHit | null = null;
+      let guideY: SnapHit | null = null;
       if (!e.altKey) {
-        const pr = container.getBoundingClientRect();
         const er = el.getBoundingClientRect();
-        const cxDiff = pr.left + pr.width / 2 - (er.left + er.width / 2);
-        const cyDiff = pr.top + pr.height / 2 - (er.top + er.height / 2);
-        if (!lockX && Math.abs(cxDiff) <= SNAP) {
-          nx = Math.round(nx + cxDiff);
-          guideX = pr.left + pr.width / 2;
+        if (!lockX) {
+          guideX = bestSnap(
+            {
+              start: er.left,
+              end: er.right,
+              centre: er.left + er.width / 2,
+              crossStart: er.top,
+              crossEnd: er.bottom,
+            },
+            snapTargets,
+            "x",
+            SNAP,
+          );
+          if (guideX) nx = Math.round(nx + guideX.delta);
         }
-        if (!lockY && Math.abs(cyDiff) <= SNAP) {
-          ny = Math.round(ny + cyDiff);
-          guideY = pr.top + pr.height / 2;
+        if (!lockY) {
+          guideY = bestSnap(
+            {
+              start: er.top,
+              end: er.bottom,
+              centre: er.top + er.height / 2,
+              crossStart: er.left,
+              crossEnd: er.right,
+            },
+            snapTargets,
+            "y",
+            SNAP,
+          );
+          if (guideY) ny = Math.round(ny + guideY.delta);
         }
-        if (guideX !== null || guideY !== null) {
+        if (guideX || guideY) {
           el.style.setProperty("transform", `translate(${nx}px, ${ny}px)`);
         }
       }
@@ -395,13 +650,21 @@
       currentReposition?.();
     };
 
-    const onUp = (): void => {
+    const onUp = (e: MouseEvent): void => {
       document.removeEventListener("mousemove", onMove, true);
       document.removeEventListener("mouseup", onUp, true);
       hideGuides();
       paused = false;
       if (!moved) return; // it was a click, not a drag - leave selection alone
       suppressClick = true;
+      // Crossing the dead zone and drifting back is still a click. The entry
+      // check alone left `moved` latched on, so a tremor wrote its residue.
+      if (Math.hypot(e.clientX - startX, e.clientY - startY) < DRAG_DEAD_ZONE) {
+        if (previousTransform) el.style.setProperty("transform", previousTransform);
+        else el.style.removeProperty("transform");
+        currentReposition?.();
+        return;
+      }
       const value = el.style.getPropertyValue("transform");
       sendStyleWrite(
         el,
@@ -420,6 +683,119 @@
     document.addEventListener("mouseup", onUp, true);
   }
 
+  // ---- smart alignment ------------------------------------------------------
+
+  interface SnapBox {
+    left: number;
+    right: number;
+    top: number;
+    bottom: number;
+    cx: number;
+    cy: number;
+  }
+
+  /**
+   * Boxes worth aligning to, measured ONCE when a drag begins. Measuring in
+   * every mousemove would force a full layout per frame; nothing here moves
+   * while dragging anyway. Only what is on screen counts, which is also the
+   * only thing the user can see themselves lining up with.
+   */
+  function collectSnapTargets(moving: HTMLElement): SnapBox[] {
+    const boxes: SnapBox[] = [];
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const push = (left: number, top: number, width: number, height: number): void => {
+      boxes.push({
+        left,
+        top,
+        right: left + width,
+        bottom: top + height,
+        cx: left + width / 2,
+        cy: top + height / 2,
+      });
+    };
+
+    // The parent's INNER box (padding excluded) is what people align to most
+    // of the time, so it goes in first.
+    const parent = moving.parentElement;
+    if (parent) {
+      const pr = parent.getBoundingClientRect();
+      const cs = getComputedStyle(parent);
+      const pl = parseFloat(cs.paddingLeft) || 0;
+      const pt = parseFloat(cs.paddingTop) || 0;
+      const pr2 = parseFloat(cs.paddingRight) || 0;
+      const pb = parseFloat(cs.paddingBottom) || 0;
+      push(pr.left + pl, pr.top + pt, pr.width - pl - pr2, pr.height - pt - pb);
+    }
+
+    for (const el of document.body.querySelectorAll<HTMLElement>("*")) {
+      if (boxes.length > 400) break; // hard cap; this runs per drag, not per frame
+      if (el === moving || el.contains(moving) || moving.contains(el)) continue;
+      if (isUiEl(el)) continue;
+      const r = el.getBoundingClientRect();
+      if (r.width < 4 || r.height < 4) continue;
+      if (r.right < 0 || r.left > vw || r.bottom < 0 || r.top > vh) continue;
+      push(r.left, r.top, r.width, r.height);
+    }
+    return boxes;
+  }
+
+  interface SnapHit {
+    /** How far to shift the element so it lands on the guide. */
+    delta: number;
+    /** Where the guide line sits, in viewport coordinates. */
+    at: number;
+    /** Span of the line, so it visibly connects BOTH elements. */
+    from: number;
+    to: number;
+  }
+
+  interface MovingEdges {
+    start: number;
+    end: number;
+    centre: number;
+    crossStart: number;
+    crossEnd: number;
+  }
+
+  /** Best alignment on one axis: our edges/centre against every candidate. */
+  function bestSnap(
+    moving: MovingEdges,
+    targets: SnapBox[],
+    axis: "x" | "y",
+    tolerance: number,
+  ): SnapHit | null {
+    let best: SnapHit | null = null;
+    for (const box of targets) {
+      const tStart = axis === "x" ? box.left : box.top;
+      const tEnd = axis === "x" ? box.right : box.bottom;
+      const tCentre = axis === "x" ? box.cx : box.cy;
+      const crossStart = axis === "x" ? box.top : box.left;
+      const crossEnd = axis === "x" ? box.bottom : box.right;
+      // Edge-to-edge both ways, plus centre-to-centre: the same pairs Figma
+      // offers, which is what makes the snapping feel predictable.
+      const pairs: Array<[number, number]> = [
+        [moving.start, tStart],
+        [moving.start, tEnd],
+        [moving.end, tEnd],
+        [moving.end, tStart],
+        [moving.centre, tCentre],
+      ];
+      for (const [mine, theirs] of pairs) {
+        const delta = theirs - mine;
+        if (Math.abs(delta) > tolerance) continue;
+        if (best && Math.abs(delta) >= Math.abs(best.delta)) continue;
+        best = {
+          delta,
+          at: theirs,
+          from: Math.min(crossStart, moving.crossStart),
+          to: Math.max(crossEnd, moving.crossEnd),
+        };
+      }
+    }
+    return best;
+  }
+
   function ensureGuides(): void {
     if (!guideV) {
       guideV = document.createElement("div");
@@ -435,16 +811,20 @@
     }
   }
 
-  function showGuides(x: number | null, y: number | null): void {
+  function showGuides(x: SnapHit | null, y: SnapHit | null): void {
     ensureGuides();
-    if (x !== null) {
-      guideV!.style.left = `${x}px`;
+    if (x) {
+      guideV!.style.left = `${x.at}px`;
+      guideV!.style.top = `${x.from}px`;
+      guideV!.style.height = `${Math.max(1, x.to - x.from)}px`;
       guideV!.style.display = "block";
     } else {
       guideV!.style.display = "none";
     }
-    if (y !== null) {
-      guideH!.style.top = `${y}px`;
+    if (y) {
+      guideH!.style.top = `${y.at}px`;
+      guideH!.style.left = `${y.from}px`;
+      guideH!.style.width = `${Math.max(1, y.to - y.from)}px`;
       guideH!.style.display = "block";
     } else {
       guideH!.style.display = "none";
@@ -698,31 +1078,42 @@
     const newValue = input.value;
     if (newValue === previousValue) return;
     el.setAttribute(name, newValue);
-    chrome.runtime.sendMessage(
-      {
-        kind: "froede-write-attr",
-        target,
-        name,
-        previousValue,
-        newValue,
-      } satisfies FroedeRuntimeMessage,
-      (response: FroedeWriteResponse | undefined) => {
-        if (response?.ok) {
-          el.classList.add("froede-ok");
-          setTimeout(() => el.classList.remove("froede-ok"), 900);
-          toast(`froede: saved to ${response.file ?? "source"}`);
-        } else {
-          if (previousValue) el.setAttribute(name, previousValue);
-          else el.removeAttribute(name);
-          input.value = previousValue;
-          el.classList.add("froede-err");
-          setTimeout(() => el.classList.remove("froede-err"), 1200);
-          toast(
-            `froede: ${response?.error ?? "no response from the extension background"}`,
-            4200,
-          );
-        }
+    const revert = (): void => {
+      if (previousValue) el.setAttribute(name, previousValue);
+      else el.removeAttribute(name);
+      input.value = previousValue;
+    };
+    void guardShared(
+      el,
+      `this ${name} change`,
+      (onlyInstance) => {
+        chrome.runtime.sendMessage(
+          {
+            kind: "froede-write-attr",
+            target,
+            name,
+            previousValue,
+            newValue,
+            onlyInstance,
+          } satisfies FroedeRuntimeMessage,
+          (response: FroedeWriteResponse | undefined) => {
+            if (response?.ok) {
+              el.classList.add("froede-ok");
+              setTimeout(() => el.classList.remove("froede-ok"), 900);
+              toast(`froede: saved to ${response.file ?? "source"}`);
+            } else {
+              revert();
+              el.classList.add("froede-err");
+              setTimeout(() => el.classList.remove("froede-err"), 1200);
+              toast(
+                `froede: ${response?.error ?? "no response from the extension background"}`,
+                4200,
+              );
+            }
+          },
+        );
       },
+      revert,
     );
   }
 
@@ -772,6 +1163,7 @@
     const startY = event.clientY;
     const previousWidth = el.style.getPropertyValue("width");
     const previousHeight = el.style.getPropertyValue("height");
+    let resized = false;
     const growX = corner === "ne" || corner === "se" ? 1 : -1;
     const growY = corner === "sw" || corner === "se" ? 1 : -1;
 
@@ -796,6 +1188,11 @@
     function onMove(e: MouseEvent): void {
       const dx = e.clientX - startX;
       const dy = e.clientY - startY;
+      // Same dead zone as drag-to-move. Without it, a click that merely
+      // grazes a handle serialized the element's MEASURED box as a fixed
+      // width/height in px, freezing a fluid (grid/Tailwind) block.
+      if (!resized && Math.hypot(dx, dy) < DRAG_DEAD_ZONE) return;
+      resized = true;
       // Shift locks to whichever axis is dragging further, like Figma.
       const lockY = e.shiftKey && Math.abs(dx) >= Math.abs(dy);
       const lockX = e.shiftKey && !lockY;
@@ -811,14 +1208,30 @@
       document.removeEventListener("mousemove", onMove, true);
       document.removeEventListener("mouseup", onUp, true);
       paused = false;
-      const style: Record<string, string> = {
-        width: el.style.getPropertyValue("width"),
-        height: el.style.getPropertyValue("height"),
-      };
-      const previousStyle: Record<string, string> = {
-        width: previousWidth,
-        height: previousHeight,
-      };
+      // Never write a size the user did not actually drag. The panel's W/H
+      // are MEASURED values, so writing them back on a stray click is what
+      // pinned fluid elements to px in the first place.
+      if (!resized) return;
+
+      // A hard px width is precisely what breaks a fluid layout on a phone,
+      // so express the result against the parent whenever there is one.
+      const parentWidth = el.parentElement?.getBoundingClientRect().width ?? 0;
+      const widthPx = parseFloat(el.style.getPropertyValue("width")) || 0;
+      const width =
+        parentWidth > 0 && widthPx > 0
+          ? `${Math.round((widthPx / parentWidth) * 1000) / 10}%`
+          : el.style.getPropertyValue("width");
+      el.style.setProperty("width", width);
+
+      const style: Record<string, string> = { width };
+      const previousStyle: Record<string, string> = { width: previousWidth };
+      if (isTextBlock(el)) {
+        // Let it keep growing with its content instead of freezing it.
+        el.style.removeProperty("height");
+      } else {
+        style.height = el.style.getPropertyValue("height");
+        previousStyle.height = previousHeight;
+      }
       for (const prop of constraints) {
         style[prop] = freeValue[prop];
         previousStyle[prop] = previousConstraint[prop] ?? "";
@@ -849,12 +1262,29 @@
     previousStyle: Record<string, string>,
     onFail: () => void,
   ): void {
+    void guardShared(
+      el,
+      "this style change",
+      (onlyInstance) => sendStyleWriteNow(el, target, style, previousStyle, onFail, onlyInstance),
+      onFail,
+    );
+  }
+
+  function sendStyleWriteNow(
+    el: HTMLElement,
+    target: FroedeEditTarget,
+    style: Record<string, string>,
+    previousStyle: Record<string, string>,
+    onFail: () => void,
+    onlyInstance?: number,
+  ): void {
     chrome.runtime.sendMessage(
       {
         kind: "froede-write-style",
         target,
         previousStyle,
         style,
+        onlyInstance,
       } satisfies FroedeRuntimeMessage,
       (response: FroedeWriteResponse | undefined) => {
         if (response?.ok) {
@@ -870,6 +1300,7 @@
             4200,
           );
         }
+        updateHistoryBadge(response?.undoDepth, response?.redoDepth);
       },
     );
   }
@@ -917,27 +1348,39 @@
         paused = false;
         return;
       }
-      chrome.runtime.sendMessage(
-        {
-          kind: "froede-write",
-          target,
-          previousText: originalText,
-          newText,
-        } satisfies FroedeRuntimeMessage,
-        (response: FroedeWriteResponse | undefined) => {
-          if (response?.ok) {
-            el.classList.add("froede-ok");
-            setTimeout(() => el.classList.remove("froede-ok"), 900);
-            toast(`froede: saved to ${response.file ?? "source"}`);
-          } else {
-            el.textContent = originalText;
-            el.classList.add("froede-err");
-            setTimeout(() => el.classList.remove("froede-err"), 1200);
-            toast(
-              `froede: ${response?.error ?? "no response from the extension background"}`,
-              4200,
-            );
-          }
+      void guardShared(
+        el,
+        "this text change",
+        (onlyInstance) => {
+          chrome.runtime.sendMessage(
+            {
+              kind: "froede-write",
+              target,
+              previousText: originalText,
+              newText,
+              onlyInstance,
+            } satisfies FroedeRuntimeMessage,
+            (response: FroedeWriteResponse | undefined) => {
+              if (response?.ok) {
+                el.classList.add("froede-ok");
+                setTimeout(() => el.classList.remove("froede-ok"), 900);
+                toast(`froede: saved to ${response.file ?? "source"}`);
+              } else {
+                el.textContent = originalText;
+                el.classList.add("froede-err");
+                setTimeout(() => el.classList.remove("froede-err"), 1200);
+                toast(
+                  `froede: ${response?.error ?? "no response from the extension background"}`,
+                  4200,
+                );
+              }
+              updateHistoryBadge(response?.undoDepth, response?.redoDepth);
+              paused = false;
+            },
+          );
+        },
+        () => {
+          el.textContent = originalText;
           paused = false;
         },
       );

@@ -39,6 +39,19 @@ export const PingRequest = z.object({
 });
 export type PingRequest = z.infer<typeof PingRequest>;
 
+/**
+ * When set, the element is one of several DOM nodes sharing a single JSX
+ * template location (rendered by an array .map()), and the user chose to
+ * change only THIS occurrence rather than all of them. The index is this
+ * occurrence's 0-based position among the shared-location instances (which
+ * matches the array's iteration order). The react target then rewrites the
+ * touched value as `<loopIndexVar> === onlyInstance ? <new> : <original>`
+ * instead of editing the shared template unconditionally - never applicable
+ * to the static-html target, where every element already has its own
+ * distinct location.
+ */
+const OnlyInstance = z.number().int().min(0).max(10_000).optional();
+
 export const WriteTextRequest = z.object({
   type: z.literal("write-text"),
   requestId: z.string().min(1).max(100),
@@ -51,6 +64,7 @@ export const WriteTextRequest = z.object({
    */
   previousText: z.string().max(50_000),
   newText: z.string().max(50_000),
+  onlyInstance: OnlyInstance,
 });
 export type WriteTextRequest = z.infer<typeof WriteTextRequest>;
 
@@ -109,6 +123,7 @@ export const WriteStyleRequest = z.object({
    */
   previousStyle: z.record(z.string(), z.string()).optional(),
   style: StyleEdits,
+  onlyInstance: OnlyInstance,
 });
 export type WriteStyleRequest = z.infer<typeof WriteStyleRequest>;
 
@@ -135,6 +150,7 @@ export const WriteAttrRequest = z.object({
   /** Current value as the client sees it ("" when the attribute is absent). */
   previousValue: z.string().max(10_000),
   newValue: z.string().max(10_000),
+  onlyInstance: OnlyInstance,
 });
 export type WriteAttrRequest = z.infer<typeof WriteAttrRequest>;
 
@@ -151,6 +167,23 @@ export const DeleteElementRequest = z.object({
 });
 export type DeleteElementRequest = z.infer<typeof DeleteElementRequest>;
 
+/**
+ * Undo/redo of froede's own edits. The stack lives in the companion, the only
+ * piece that writes files, so reverting restores the exact previous bytes
+ * instead of a reconstruction. One entry is one user action.
+ */
+export const UndoRequest = z.object({
+  type: z.literal("undo"),
+  requestId: z.string().min(1).max(100),
+});
+export type UndoRequest = z.infer<typeof UndoRequest>;
+
+export const RedoRequest = z.object({
+  type: z.literal("redo"),
+  requestId: z.string().min(1).max(100),
+});
+export type RedoRequest = z.infer<typeof RedoRequest>;
+
 export const ClientMessage = z
   .discriminatedUnion("type", [
     PingRequest,
@@ -158,6 +191,8 @@ export const ClientMessage = z
     WriteStyleRequest,
     WriteAttrRequest,
     DeleteElementRequest,
+    UndoRequest,
+    RedoRequest,
   ])
   .superRefine((msg, ctx) => {
     if (
@@ -190,6 +225,9 @@ export interface WriteResultResponse {
   /** Relative path of the file that was written (when ok). */
   file?: string;
   error?: string;
+  /** Steps available in each direction, so the overlay can show them. */
+  undoDepth?: number;
+  redoDepth?: number;
 }
 
 export type ServerMessage = PongResponse | WriteResultResponse;

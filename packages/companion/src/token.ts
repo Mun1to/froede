@@ -28,6 +28,28 @@ export async function loadOrCreateToken(root: string): Promise<{
   return { token, created: true };
 }
 
+/**
+ * Walks up from `start` looking for a `.git` entry, the way git itself
+ * resolves a repository. Checking only the starting directory reports "no git
+ * repo" for every monorepo whose site lives in a subfolder - and since froede's
+ * documented undo IS `git diff`, that wrongly tells the user they have no
+ * safety net. `.git` is a directory in a normal clone but a FILE in worktrees
+ * and submodules, so any entry counts.
+ */
+export async function findGitRoot(start: string): Promise<string | null> {
+  let dir = path.resolve(start);
+  for (;;) {
+    try {
+      await fs.stat(path.join(dir, ".git"));
+      return dir;
+    } catch {
+      const parent = path.dirname(dir);
+      if (parent === dir) return null;
+      dir = parent;
+    }
+  }
+}
+
 /** Constant-time comparison that does not leak length differences. */
 export function tokensMatch(expected: string, received: string): boolean {
   const a = crypto.createHash("sha256").update(expected).digest();
@@ -44,11 +66,7 @@ export function tokensMatch(expected: string, received: string): boolean {
 export async function ensureTokenIgnored(
   root: string,
 ): Promise<"already" | "added" | "created" | "no-git"> {
-  try {
-    await fs.stat(path.join(root, ".git"));
-  } catch {
-    return "no-git";
-  }
+  if ((await findGitRoot(root)) === null) return "no-git";
   const gitignore = path.join(root, ".gitignore");
   let content = "";
   try {

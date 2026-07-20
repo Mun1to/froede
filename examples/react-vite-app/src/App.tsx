@@ -1,5 +1,14 @@
 import "./portfolio.css";
 
+// Rendered by a single .map() below: four paragraphs on screen, ONE line in
+// this file. froede should warn before an edit changes all four.
+const aboutParagraphs = [
+  "I like turning rough ideas into working products.",
+  "This whole page is editable with froede - click any line of text and change it.",
+  "These paragraphs all come from the same .map(), so they share one source location.",
+  "Try changing the colour of just one of them and read the warning.",
+];
+
 export default function App() {
   return (
     <div className="page">
@@ -46,10 +55,11 @@ export default function App() {
 
         <section id="about" className="block">
           <h2>About me</h2>
-          <p>
-            I like turning rough ideas into working products. This whole page is
-            editable with froede - click any line of text and change it.
-          </p>
+          {aboutParagraphs.map((text, i) => (
+            <p key={i} className="lead">
+              {text}
+            </p>
+          ))}
         </section>
       </main>
 

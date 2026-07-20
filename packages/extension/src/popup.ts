@@ -8,11 +8,32 @@
   const saveBtn = document.getElementById("save") as HTMLButtonElement;
   const testBtn = document.getElementById("test") as HTMLButtonElement;
   const toggleBtn = document.getElementById("toggle") as HTMLButtonElement;
+  const fixEl = document.getElementById("fix") as HTMLElement;
+  const fixCmdEl = document.getElementById("fix-cmd") as HTMLElement;
+  const copyBtn = document.getElementById("copy") as HTMLButtonElement;
 
   function setStatus(text: string, kind: "ok" | "err" | "info"): void {
     statusEl.textContent = text;
     statusEl.className = "status " + kind;
   }
+
+  /** The exact command that would fix the current error, when there is one. */
+  function setFix(command: string | undefined): void {
+    if (!command) {
+      fixEl.hidden = true;
+      fixCmdEl.textContent = "";
+      return;
+    }
+    fixCmdEl.textContent = command;
+    fixEl.hidden = false;
+  }
+
+  copyBtn.addEventListener("click", () => {
+    void navigator.clipboard.writeText(fixCmdEl.textContent ?? "").then(() => {
+      copyBtn.textContent = "Copied";
+      setTimeout(() => (copyBtn.textContent = "Copy command"), 1200);
+    });
+  });
 
   chrome.storage.local
     .get({ port: DEFAULT_PORT, token: "" })
@@ -36,8 +57,10 @@
       (response: FroedeTestResponse | undefined) => {
         if (response?.ok) {
           setStatus(`connected - project: ${response.root ?? "?"}`, "ok");
+          setFix(undefined);
         } else {
           setStatus(response?.error ?? "no response", "err");
+          setFix(response?.fix);
         }
       },
     );

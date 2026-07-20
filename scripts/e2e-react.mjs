@@ -2,7 +2,7 @@
 // examples/react-vite-app, edits the <h1> text and style in App.tsx at its
 // real source location, verifies the file, then restores it.
 import { spawn } from "node:child_process";
-import { readFileSync, writeFileSync } from "node:fs";
+import { readFileSync, unlinkSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -20,7 +20,28 @@ if (typeof WebSocket === "undefined") {
 
 const targetFile = path.join(exampleDir, "src", "App.tsx");
 const original = readFileSync(targetFile, "utf8");
-writeFileSync(path.join(exampleDir, ".froede-token"), TOKEN + "\n");
+const tokenFile = path.join(exampleDir, ".froede-token");
+// This example doubles as a manual-testing fixture, so a fixed test token
+// left behind here after the run would silently override whatever real
+// token a person is pairing with. Restore whatever was there (or remove the
+// file if there was nothing) instead of leaving "e2e111...1" behind forever.
+let previousToken = null;
+try {
+  previousToken = readFileSync(tokenFile, "utf8");
+} catch {
+  // no pre-existing token file - fine, restoreToken() below will remove ours
+}
+writeFileSync(tokenFile, TOKEN + "\n");
+function restoreToken() {
+  if (previousToken !== null) writeFileSync(tokenFile, previousToken);
+  else {
+    try {
+      unlinkSync(tokenFile);
+    } catch {
+      // already gone - fine
+    }
+  }
+}
 
 // Locate <h1> the same way @babel/parser reports it: 1-based line,
 // 0-based column of the element's `<`. Read its CURRENT text instead of
@@ -50,6 +71,7 @@ const fail = (msg) => {
   console.error("FAIL (react):", msg);
   child.kill();
   writeFileSync(targetFile, original);
+  restoreToken();
   process.exit(1);
 };
 
@@ -302,6 +324,7 @@ if (blankLines(written) > blankLines(original)) {
 ws.close();
 child.kill();
 writeFileSync(targetFile, original);
+restoreToken();
 console.log(
   "PASS (react): ping + text edit + mismatch reject + jsx escaping + style insert + style patch + transform (move) + style mismatch reject + attr patch/insert/mismatch + js-url reject + delete (mismatch reject + clean removal)",
 );

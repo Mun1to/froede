@@ -67,6 +67,27 @@
       .status.ok { color: #34d399; }
       .status.err { color: #f87171; }
       .status.info { color: #9ca3af; }
+      .fix {
+        margin-top: 8px;
+        padding: 8px;
+        border-radius: 6px;
+        background: #1e1b4b;
+        border: 1px solid #3730a3;
+      }
+      .fix code {
+        display: block;
+        margin-bottom: 6px;
+        font: 11px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace;
+        color: #fcd34d;
+        word-break: break-all;
+      }
+      .fix button {
+        width: 100%;
+        padding: 5px 0;
+        font-size: 12px;
+        background: #3730a3;
+      }
+      .fix button:hover { background: #4f46e5; }
     </style>
   </head>
   <body>
@@ -81,6 +102,10 @@
     </div>
     <button id="toggle">Toggle edit mode in this tab</button>
     <div id="status" class="status info"></div>
+    <div id="fix" class="fix" hidden>
+      <code id="fix-cmd"></code>
+      <button id="copy" type="button">Copy command</button>
+    </div>
     <script src="./popup.js"></script>
   </body>
 </html>

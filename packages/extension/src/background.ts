@@ -7,10 +7,46 @@
   const DEFAULT_PORT = 4519;
   const PROTOCOL_VERSION = 1;
   const REQUEST_TIMEOUT_MS = 8000;
+  // Mirrors the companion's close codes (packages/companion/src/server.ts).
+  const CLOSE_EXTENSION_NOT_ALLOWED = 4403;
+  const CLOSE_BAD_TOKEN = 4401;
 
   let ws: WebSocket | null = null;
   let connecting: Promise<WebSocket> | null = null;
   const pending = new Map<string, (msg: Record<string, unknown>) => void>();
+  /**
+   * Why the companion last closed on us. These three failure modes used to
+   * collapse into one message that blamed the token and the process - the two
+   * things that are usually fine - so each one now gets its own answer.
+   */
+  let lastRejection: { error: string; fix?: string } | null = null;
+
+  function rejectionFor(
+    code: number,
+    reason: string,
+    port: number,
+  ): { error: string; fix?: string } | null {
+    if (code === CLOSE_EXTENSION_NOT_ALLOWED) {
+      const id = reason.split(":")[1] || chrome.runtime.id;
+      // Must carry the port this extension is actually configured for: a
+      // command that silently reverts to the default port either reconnects
+      // to the WRONG companion (if one happens to be there) or fails with
+      // EADDRINUSE (if the default port is already taken, e.g. by another
+      // companion instance) - either way it sends the user in a circle.
+      const portFlag = port !== DEFAULT_PORT ? ` --port ${port}` : "";
+      const fix = `FROEDE_EXTENSION_ID=${id} npx froede${portFlag}`;
+      return {
+        error: `this extension (${id}) is not authorised by the companion - it was loaded unpacked, so Chrome gave it its own id. Restart the companion as: ${fix} - or answer "s" to the question it just printed in its own terminal.`,
+        fix,
+      };
+    }
+    if (code === CLOSE_BAD_TOKEN) {
+      return {
+        error: `the companion IS running on 127.0.0.1:${port} and this extension is authorised, but the token does not match the one it printed - copy the token again from its terminal.`,
+      };
+    }
+    return null;
+  }
 
   async function getSettings(): Promise<{ port: number; token: string }> {
     const stored = await chrome.storage.local.get({
@@ -38,16 +74,18 @@
       await new Promise<void>((resolve, reject) => {
         sock.onopen = () => resolve();
         sock.onerror = () =>
-          // The WebSocket API deliberately hides *why* a handshake failed
-          // (spec/security), so "unreachable" and "wrong token" look
-          // identical here - state both possibilities rather than guess.
+          // The handshake never completed, so there is no close code to read.
+          // Authorisation and token failures no longer land here (the
+          // companion accepts the upgrade and closes with a code), which
+          // leaves exactly one cause: nothing is listening on that port.
           reject(
             new Error(
-              `cannot reach the companion on 127.0.0.1:${port} - either it's not running, or the token in the popup is stale (it changes every time the companion restarts - copy it again from its terminal)`,
+              `nothing is listening on 127.0.0.1:${port} - start the companion with "npx froede" inside your project folder, and check the port here matches the one it printed`,
             ),
           );
       });
       sock.onmessage = (event) => {
+        lastRejection = null; // a real answer means the pairing is fine
         try {
           const msg = JSON.parse(String(event.data)) as Record<string, unknown>;
           const id = String(msg.requestId ?? "");
@@ -60,8 +98,17 @@
           // ignore malformed frames
         }
       };
-      sock.onclose = () => {
+      sock.onclose = (event) => {
         if (ws === sock) ws = null;
+        const rejection = rejectionFor(event.code, event.reason, port);
+        if (!rejection) return;
+        // The companion told us exactly why. Fail everything in flight with
+        // that reason instead of letting it time out into something generic.
+        lastRejection = rejection;
+        for (const [id, resolve] of [...pending]) {
+          pending.delete(id);
+          resolve({ ok: false, error: rejection.error, fix: rejection.fix });
+        }
       };
       ws = sock;
       return sock;
@@ -82,13 +129,29 @@
     return new Promise((resolve) => {
       const timer = setTimeout(() => {
         pending.delete(requestId);
-        resolve({ ok: false, error: "companion did not respond in time" });
+        resolve({
+          ok: false,
+          error: lastRejection?.error ?? "companion did not respond in time",
+          fix: lastRejection?.fix,
+        });
       }, REQUEST_TIMEOUT_MS);
       pending.set(requestId, (msg) => {
         clearTimeout(timer);
         resolve(msg);
       });
-      sock.send(JSON.stringify({ ...payload, requestId }));
+      try {
+        sock.send(JSON.stringify({ ...payload, requestId }));
+      } catch {
+        // Already closing: either a rejection we are about to be told about,
+        // or a companion that just stopped.
+        clearTimeout(timer);
+        pending.delete(requestId);
+        resolve({
+          ok: false,
+          error: lastRejection?.error ?? "the connection to the companion dropped",
+          fix: lastRejection?.fix,
+        });
+      }
     });
   }
 
@@ -102,6 +165,7 @@
               target: message.target,
               previousText: message.previousText,
               newText: message.newText,
+              onlyInstance: message.onlyInstance,
             });
             // froede already applied the change to the DOM optimistically
             // (and reverts on failure), so there's no reload here: reloading a
@@ -131,6 +195,7 @@
               name: message.name,
               previousValue: message.previousValue,
               newValue: message.newValue,
+              onlyInstance: message.onlyInstance,
             });
             const ok = result.ok === true;
             sendResponse({
@@ -156,6 +221,7 @@
               target: message.target,
               previousStyle: message.previousStyle,
               style: message.style,
+              onlyInstance: message.onlyInstance,
             });
             const ok = result.ok === true;
             sendResponse({
@@ -196,6 +262,31 @@
         return true;
       }
 
+      if (message.kind === "froede-undo" || message.kind === "froede-redo") {
+        (async () => {
+          try {
+            const result = await request({
+              type: message.kind === "froede-undo" ? "undo" : "redo",
+            });
+            sendResponse({
+              ok: result.ok === true,
+              file: typeof result.file === "string" ? result.file : undefined,
+              error: typeof result.error === "string" ? result.error : undefined,
+              undoDepth:
+                typeof result.undoDepth === "number" ? result.undoDepth : undefined,
+              redoDepth:
+                typeof result.redoDepth === "number" ? result.redoDepth : undefined,
+            } satisfies FroedeWriteResponse);
+          } catch (err) {
+            sendResponse({
+              ok: false,
+              error: err instanceof Error ? err.message : String(err),
+            } satisfies FroedeWriteResponse);
+          }
+        })();
+        return true;
+      }
+
       if (message.kind === "froede-test") {
         (async () => {
           try {
@@ -207,6 +298,7 @@
               sendResponse({
                 ok: false,
                 error: String(result.error ?? "unexpected companion response"),
+                fix: typeof result.fix === "string" ? result.fix : undefined,
               } satisfies FroedeTestResponse);
               return;
             }
