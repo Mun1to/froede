@@ -58,7 +58,7 @@ froede edita archivos de tu ordenador, así que esto importa: todo corre **en lo
 
 Guía completa, con un prompt listo para pegarle a tu asistente de IA: [`docs/INSTALAR.md`](docs/INSTALAR.md).
 
-v0.4 edita texto plano visible, tamaño/color/tipografía/espaciado inline, y un allowlist seguro de atributos (href/src rechazan URLs de tipo script), y añade lo básico de layout - arrastrar para mover (con guías de centrado) y borrar. Duplicar elementos y las animaciones siguen en el roadmap.
+v0.5 edita texto plano visible, tamaño/color/tipografía/espaciado inline, y un allowlist seguro de atributos (href/src rechazan URLs de tipo script), y añade lo básico de layout - arrastrar para mover (con alineación inteligente respecto a los elementos cercanos), redimensionar y borrar, todo con undo/redo real (Ctrl+Z). Editar una instancia de un elemento generado por `.map()` ahora avisa y permite aislar el cambio en vez de reescribir todas las instancias en silencio. Duplicar elementos y las animaciones siguen en el roadmap.
 
 ## Con Claude Code (o cualquier asistente de IA)
 

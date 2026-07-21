@@ -70,7 +70,7 @@ Browser (Chrome/Edge)                     Your machine
 
 Full walkthrough, including a ready-to-paste prompt for your AI coding session: [`docs/INSTALAR.md`](docs/INSTALAR.md) (Spanish).
 
-v0.4 edits plain visible text, inline size/color/typography/spacing, and a safe allowlist of attributes (href/src reject script-scheme URLs), and adds layout basics - drag to move (with center-snap guides) and delete. Duplicating elements and animations are still on the roadmap.
+v0.5 edits plain visible text, inline size/color/typography/spacing, and a safe allowlist of attributes (href/src reject script-scheme URLs), and adds layout basics - drag to move (with smart alignment against nearby elements), resize and delete, all with real undo/redo (Ctrl+Z). Editing one instance of a `.map()`-rendered element now warns and lets you isolate the change instead of silently rewriting every instance. Duplicating elements and animations are still on the roadmap.
 
 ## With Claude Code (or any AI assistant)
 
