@@ -27,7 +27,7 @@ import {
 } from "./targets/staticHtml.js";
 import { tokensMatch } from "./token.js";
 
-export const COMPANION_VERSION = "0.5.0";
+export const COMPANION_VERSION = "0.5.1";
 
 /**
  * Close codes in the private 4000-4999 range. A rejection before the upgrade

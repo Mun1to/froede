@@ -1,6 +1,6 @@
 {
   "name": "vite-plugin-froede",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "Vite plugin that annotates JSX elements with their source location during dev, so the froede extension can map clicks back to real code.",
   "license": "MIT",
   "author": "Mun1to",

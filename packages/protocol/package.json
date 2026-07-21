@@ -1,6 +1,6 @@
 {
   "name": "froede-protocol",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "Wire protocol shared by the froede extension and companion (zod schemas).",
   "license": "MIT",
   "author": "Mun1to",

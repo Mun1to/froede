@@ -6,9 +6,9 @@
 
 **front + edit + code.** A lightweight toolkit for editing the code behind a running web page or app by clicking on what you see - no diving into the source, no full IDE required.
 
-[![npm](https://img.shields.io/npm/v/froede)](https://www.npmjs.com/package/froede) [![license](https://img.shields.io/npm/l/froede)](LICENSE) [![Chrome Web Store](https://img.shields.io/badge/Chrome%20Web%20Store-coming%20soon-4285F4?logo=googlechrome&logoColor=white)](https://github.com/Mun1to/froede/releases/latest)
+[![npm](https://img.shields.io/npm/v/froede)](https://www.npmjs.com/package/froede) [![license](https://img.shields.io/npm/l/froede)](LICENSE) [![Chrome Web Store](https://img.shields.io/chrome-web-store/v/clfpgnbnfgaabdoiadjfkhfhmnfemeba?logo=googlechrome&logoColor=white&label=Chrome%20Web%20Store)](https://chromewebstore.google.com/detail/froede/clfpgnbnfgaabdoiadjfkhfhmnfemeba)
 
-> **Status: live on npm** (current version in the badge above). Text, size, color, typography, spacing and attributes (alt, href, placeholder, src, title) all edit end to end on both targets (static HTML and React + Vite), verified against real files. You can also **drag elements to move them** (with center-snap guides, like Canva) and **delete them** with Backspace. Full layout tools and animations are still on the roadmap. **In review for the Chrome Web Store** - until it lands there, the quickstart below covers the manual install.
+> **Status: live on the Chrome Web Store and npm** (current versions in the badges above). Text, size, color, typography, spacing and attributes (alt, href, placeholder, src, title) all edit end to end on both targets (static HTML and React + Vite), verified against real files. You can also **drag elements to move them** (snapping to nearby elements, Figma-style), **delete them** with Backspace, and **undo any of it with Ctrl+Z**. Full layout tools and animations are still on the roadmap.
 
 ![Selecting an element shows resize handles and a property panel](docs/screenshots/panel-select.png)
 
@@ -22,11 +22,11 @@ Point at an element on a live page or app, change it - text, size, color, typogr
 |---|---|---|---|
 | ![A landing page running on localhost](docs/screenshots/hero.png) | ![A heading being edited in place](docs/screenshots/text-edit.png) | ![A button selected, with resize handles and a panel showing size, colors, type, spacing and its href attribute](docs/screenshots/panel-select.png) | ![An element being dragged, with a vertical guide snapping it to the center of its container](docs/screenshots/move-guides.png) |
 
-Click any element to select it - resize handles appear on its corners (Shift+drag to lock to one axis) and a panel shows size, color, typography, spacing and the element's editable attributes. Drag it to move it - smart guides snap it to the center of its container - and press Backspace to delete it. Double-click a text element to edit its content in place. Every change writes straight to the real source file.
+Click any element to select it - resize handles appear on its corners (Shift+drag to lock to one axis) and a panel shows size, color, typography, spacing and the element's editable attributes. Drag it to move it - smart guides snap it to the edges and centers of the elements around it - and press Backspace to delete it. Double-click a text element to edit its content in place. Every change writes straight to the real source file, and Ctrl+Z takes it back.
 
 ## Is it safe?
 
-froede edits files on your computer, so this matters: everything runs **locally** (no cloud, no account, no telemetry, no AI), the part that writes files can only touch the one folder you point it at, and every piece is explained in normal words in [SECURITY.md](SECURITY.md) - including what froede can *never* do. Your undo is always `git diff`. The extension's [Privacy Policy](PRIVACY.md) covers exactly what data it does (and does not) touch.
+froede edits files on your computer, so this matters: everything runs **locally** (no cloud, no account, no telemetry, no AI), the part that writes files can only touch the one folder you point it at, and every piece is explained in normal words in [SECURITY.md](SECURITY.md) - including what froede can *never* do. Your undo is Ctrl+Z, and `git diff` behind it. The extension's [Privacy Policy](PRIVACY.md) covers exactly what data it does (and does not) touch.
 
 ## How it works
 
@@ -49,7 +49,9 @@ Browser (Chrome/Edge)                     Your machine
 
 ## Quickstart
 
-1. **Get the extension** (once per browser): [download the .zip from the latest release](https://github.com/Mun1to/froede/releases/latest), unzip it, then go to `chrome://extensions`, turn on Developer mode, click "Load unpacked" and pick the unzipped folder.
+1. **Get the extension** (once per browser): [install it from the Chrome Web Store](https://chromewebstore.google.com/detail/froede/clfpgnbnfgaabdoiadjfkhfhmnfemeba).
+
+   > Prefer not to use the store, or want the unreleased build? [Download the .zip from the latest release](https://github.com/Mun1to/froede/releases/latest), unzip it, then go to `chrome://extensions`, turn on Developer mode, click "Load unpacked" and pick the unzipped folder.
 
 2. **Wire up your project** (static HTML projects skip this - just serve the folder on localhost):
 

@@ -6,9 +6,9 @@
 
 **front + edit + code.** Un toolkit ligero para editar el código detrás de una web o app en ejecución haciendo clic en lo que ves - sin bucear en el código fuente, sin necesitar un IDE completo.
 
-[![npm](https://img.shields.io/npm/v/froede)](https://www.npmjs.com/package/froede) [![license](https://img.shields.io/npm/l/froede)](LICENSE) [![Chrome Web Store](https://img.shields.io/badge/Chrome%20Web%20Store-pronto-4285F4?logo=googlechrome&logoColor=white)](https://github.com/Mun1to/froede/releases/latest)
+[![npm](https://img.shields.io/npm/v/froede)](https://www.npmjs.com/package/froede) [![license](https://img.shields.io/npm/l/froede)](LICENSE) [![Chrome Web Store](https://img.shields.io/chrome-web-store/v/clfpgnbnfgaabdoiadjfkhfhmnfemeba?logo=googlechrome&logoColor=white&label=Chrome%20Web%20Store)](https://chromewebstore.google.com/detail/froede/clfpgnbnfgaabdoiadjfkhfhmnfemeba)
 
-> **Estado: publicado en npm** (versión actual en el badge de arriba). Texto, tamaño, color, tipografía, espaciado y atributos (alt, href, placeholder, src, title) editan de punta a punta en ambos targets (HTML estático y React + Vite), verificado contra archivos reales. También puedes **arrastrar elementos para moverlos** (con guías de centrado, tipo Canva) y **borrarlos** con Backspace. Las herramientas de layout completas y las animaciones siguen en el roadmap. **En revisión para la Chrome Web Store** - hasta que aparezca allí, el quickstart de abajo cubre la instalación manual.
+> **Estado: publicado en la Chrome Web Store y en npm** (versiones actuales en los badges de arriba). Texto, tamaño, color, tipografía, espaciado y atributos (alt, href, placeholder, src, title) editan de punta a punta en ambos targets (HTML estático y React + Vite), verificado contra archivos reales. También puedes **arrastrar elementos para moverlos** (con alineación a los elementos de alrededor, tipo Figma), **borrarlos** con Backspace y **deshacerlo todo con Ctrl+Z**. Las herramientas de layout completas y las animaciones siguen en el roadmap.
 
 ![Al seleccionar un elemento aparecen tiradores de redimensión y un panel de propiedades](docs/screenshots/panel-select.png)
 
@@ -22,11 +22,11 @@ Señalas un elemento en una página o app en ejecución, lo cambias - texto, tam
 |---|---|---|---|
 | ![Una landing corriendo en localhost](docs/screenshots/hero.png) | ![Un título editándose en el sitio](docs/screenshots/text-edit.png) | ![Un botón seleccionado, con tiradores y panel de tamaño, colores, tipografía, espaciado y su atributo href](docs/screenshots/panel-select.png) | ![Un elemento arrastrándose, con una guía vertical que lo centra en su contenedor](docs/screenshots/move-guides.png) |
 
-Clic en cualquier elemento para seleccionarlo - aparecen tiradores en las esquinas (Shift+arrastre para trabar a un solo eje) y un panel con tamaño, color, tipografía, espaciado y los atributos editables del elemento. Arrástralo para moverlo - las guías lo centran automáticamente - y pulsa Backspace para borrarlo. Doble clic en un texto para editarlo en el sitio. Cada cambio se escribe directo en el archivo fuente real.
+Clic en cualquier elemento para seleccionarlo - aparecen tiradores en las esquinas (Shift+arrastre para trabar a un solo eje) y un panel con tamaño, color, tipografía, espaciado y los atributos editables del elemento. Arrástralo para moverlo - las guías lo alinean con los bordes y centros de los elementos de alrededor - y pulsa Backspace para borrarlo. Doble clic en un texto para editarlo en el sitio. Cada cambio se escribe directo en el archivo fuente real, y Ctrl+Z lo deshace.
 
 ## ¿Es seguro?
 
-froede edita archivos de tu ordenador, así que esto importa: todo corre **en local** (sin nube, sin cuenta, sin telemetría, sin IA), la pieza que escribe archivos solo puede tocar la carpeta que tú le indicas, y cada parte está explicada en palabras normales en [SECURITY.es.md](SECURITY.es.md) - incluido lo que froede *nunca* puede hacer. Tu deshacer siempre es `git diff`.
+froede edita archivos de tu ordenador, así que esto importa: todo corre **en local** (sin nube, sin cuenta, sin telemetría, sin IA), la pieza que escribe archivos solo puede tocar la carpeta que tú le indicas, y cada parte está explicada en palabras normales en [SECURITY.es.md](SECURITY.es.md) - incluido lo que froede *nunca* puede hacer. Tu deshacer es Ctrl+Z, y `git diff` por detrás.
 
 ## Cómo funciona
 
@@ -37,7 +37,9 @@ froede edita archivos de tu ordenador, así que esto importa: todo corre **en lo
 
 ## Quickstart
 
-1. **Consigue la extensión** (una vez por navegador): [descarga el .zip de la última release](https://github.com/Mun1to/froede/releases/latest), descomprímelo, entra en `chrome://extensions`, activa el Modo desarrollador, pulsa "Cargar descomprimida" y elige la carpeta descomprimida.
+1. **Consigue la extensión** (una vez por navegador): [instálala desde la Chrome Web Store](https://chromewebstore.google.com/detail/froede/clfpgnbnfgaabdoiadjfkhfhmnfemeba).
+
+   > ¿Prefieres no pasar por la tienda, o quieres la build aún sin publicar? [Descarga el .zip de la última release](https://github.com/Mun1to/froede/releases/latest), descomprímelo, entra en `chrome://extensions`, activa el Modo desarrollador, pulsa "Cargar descomprimida" y elige la carpeta descomprimida.
 
 2. **Prepara tu proyecto** (los HTML estáticos se saltan este paso - basta servir la carpeta en localhost):
 
