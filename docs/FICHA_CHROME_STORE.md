@@ -23,8 +23,11 @@ Point at an element on a page running on localhost, change it - text, size, colo
 
 How it works:
 - Click any element to select it. Resize handles appear on its corners (Shift+drag to lock to one axis), and a panel shows size, color, typography, spacing and the element's editable attributes.
-- Drag an element to move it, with smart guides that snap it to the center of its container. Press Backspace to delete the selected element.
+- Drag an element to move it, with smart alignment guides that snap to the edges and centers of the elements around it, Figma-style. Press Backspace to delete the selected element.
 - Double-click a text element to edit its content in place.
+- Undo and redo without leaving the page: Ctrl+Z steps back through your edits, Ctrl+Shift+Z redoes them. froede refuses to undo over a file you have edited by hand in the meantime, so your own work is never overwritten.
+- Editing an element rendered by a loop (an array .map() in React) asks first, then lets you change just that one instance or all of them - a click on one item never silently rewrites the rest.
+- Resizing writes fluid widths instead of hard pixel values, so it does not break a responsive layout.
 - Every change writes straight to the real source file on your machine - static HTML and React + Vite projects are both supported.
 
 Everything runs locally. There is no cloud, no account, no telemetry, and no AI. The extension talks only to a small companion process you start yourself with "npx froede" in your own project folder, over a loopback-only connection your browser secures with a pairing token. That companion physically cannot write outside the project folder it was started in, and every edit verifies the current file content before writing so it never overwrites unrelated changes.
@@ -42,7 +45,7 @@ froede is open source (MIT). Full docs, source and security model: https://githu
 **Single purpose description:**
 
 ```
-froede lets a developer click an element on their own localhost page and edit its text, size, color, typography, spacing, attributes or position, or delete it, writing the change directly back into the real source file they are running - a point-and-click alternative to hand-editing code for simple visual tweaks.
+froede lets a developer click an element on their own localhost page and edit its text, size, color, typography, spacing, attributes or position, or delete it, writing the change directly back into the real source file they are running (with undo/redo) - a point-and-click alternative to hand-editing code for simple visual tweaks.
 ```
 
 **Permission justifications:**
