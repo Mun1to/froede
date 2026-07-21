@@ -153,5 +153,5 @@ export async function runInit(root: string): Promise<void> {
   log("     turn on Developer mode, click \"Load unpacked\" and pick the unzipped folder.");
   log("  2. Start the companion here:  npx froede");
   log("  3. Open your localhost page, paste the port + token into the extension popup,");
-  log("     then hit \"Toggle edit mode\" and click something.");
+  log("     then hit \"Edit\" and click something.");
 }

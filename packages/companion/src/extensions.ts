@@ -114,7 +114,7 @@ export function createPairingPrompt(options: {
       options.onApproved(id);
       output.write(
         `  Authorised. Saved to ${APPROVED_FILE}\n` +
-          `  Press "Test connection" in the popup again.\n\n`,
+          `  Press "Save and test" in the popup again.\n\n`,
       );
     } catch {
       output.write(`  Could not save the approval; use the command above instead.\n\n`);

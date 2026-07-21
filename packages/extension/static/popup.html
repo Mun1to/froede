@@ -3,109 +3,229 @@
   <head>
     <meta charset="utf-8" />
     <style>
+      :root {
+        --bg: #ffffff;
+        --surface: #f4f4fb;
+        --ink: #0b0b1a;
+        --muted: #6b6b8a;
+        --brand: #1800ad;
+        --brand-ink: #ffffff;
+        --line: #0b0b1a;
+        --shadow: #0b0b1a;
+        --field-line: #1800ad;
+        --ok: #067a4a;
+        --ok-ink: #ffffff;
+        --err: #c01d3c;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #12122b;
+          --surface: #1b1b3d;
+          --ink: #e8e8ff;
+          --muted: #9a9ac2;
+          --brand: #5b4bff;
+          --brand-ink: #ffffff;
+          --line: #7c6cff;
+          --shadow: #2a1f7a;
+          --field-line: #5b4bff;
+          --ok: #34d399;
+          --ok-ink: #06251b;
+          --err: #ff8095;
+        }
+      }
+
+      * { box-sizing: border-box; }
+
       body {
-        width: 300px;
+        width: 320px;
         margin: 0;
-        padding: 14px;
-        font: 13px/1.5 system-ui, sans-serif;
-        background: #12122b;
-        color: #e0e7ff;
+        padding: 16px;
+        font: 13px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+        background: var(--bg);
+        color: var(--ink);
       }
-      h1 {
-        font-size: 15px;
-        margin: 0 0 10px;
-        color: #a5b4fc;
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 18px;
       }
+      .brand svg {
+        width: 34px;
+        height: 34px;
+        flex: none;
+        color: var(--brand);
+      }
+      .brand h1 {
+        margin: 0;
+        font-size: 26px;
+        font-weight: 900;
+        letter-spacing: -0.02em;
+        color: var(--brand);
+        text-transform: uppercase;
+      }
+      .brand .ver {
+        margin-left: auto;
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--muted);
+      }
+
       label {
         display: block;
-        margin: 8px 0 3px;
-        color: #9ca3af;
-        font-size: 12px;
+        margin: 0 0 5px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--ink);
       }
+      .field + .field { margin-top: 12px; }
+
       input {
         width: 100%;
-        box-sizing: border-box;
-        padding: 6px 8px;
-        border-radius: 6px;
-        border: 1px solid #3730a3;
-        background: #1e1b4b;
-        color: #e0e7ff;
-        font: inherit;
+        padding: 9px 10px;
+        border: 2px solid var(--field-line);
+        border-radius: 8px;
+        background: var(--surface);
+        color: var(--ink);
+        font: 13px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace;
       }
+      input::placeholder {
+        color: var(--muted);
+        font-family: system-ui, sans-serif;
+      }
+      input:focus {
+        outline: 2px solid var(--brand);
+        outline-offset: 1px;
+      }
+
       .row {
         display: flex;
         gap: 8px;
-        margin-top: 12px;
+        margin-top: 16px;
       }
       button {
         flex: 1;
-        padding: 7px 0;
-        border: 0;
-        border-radius: 6px;
-        background: #4f46e5;
-        color: white;
-        font: inherit;
+        padding: 10px 4px;
+        border: 2px solid var(--line);
+        border-radius: 10px;
+        box-shadow: 3px 3px 0 var(--shadow);
+        background: var(--bg);
+        color: var(--brand);
+        font: 700 12px/1.2 system-ui, sans-serif;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
         cursor: pointer;
+        transition: transform 80ms, box-shadow 80ms;
       }
-      button:hover {
-        background: #6366f1;
+      button:hover { background: var(--surface); }
+      button:active {
+        transform: translate(2px, 2px);
+        box-shadow: 1px 1px 0 var(--shadow);
       }
       #toggle {
-        margin-top: 10px;
-        width: 100%;
-        background: #059669;
+        background: var(--brand);
+        color: var(--brand-ink);
       }
-      #toggle:hover {
-        background: #10b981;
+      #toggle:hover { filter: brightness(1.12); }
+      #toggle.on {
+        background: var(--ok);
+        color: var(--ok-ink);
       }
+
       .status {
-        margin-top: 10px;
+        display: flex;
+        align-items: flex-start;
+        gap: 7px;
+        margin-top: 14px;
         min-height: 18px;
         font-size: 12px;
-        word-break: break-all;
+        color: var(--muted);
+        word-break: break-word;
       }
-      .status.ok { color: #34d399; }
-      .status.err { color: #f87171; }
-      .status.info { color: #9ca3af; }
+      .status::before {
+        content: "";
+        flex: none;
+        width: 8px;
+        height: 8px;
+        margin-top: 5px;
+        border-radius: 50%;
+        background: currentColor;
+        opacity: 0.55;
+      }
+      .status:empty { display: none; }
+      .status.ok { color: var(--ok); }
+      .status.ok::before { opacity: 1; }
+      .status.err { color: var(--err); }
+      .status.err::before { opacity: 1; }
+
       .fix {
-        margin-top: 8px;
-        padding: 8px;
-        border-radius: 6px;
-        background: #1e1b4b;
-        border: 1px solid #3730a3;
+        margin-top: 12px;
+        padding: 10px;
+        border: 2px solid var(--field-line);
+        border-radius: 10px;
+        background: var(--surface);
+      }
+      .fix p {
+        margin: 0 0 6px;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--muted);
       }
       .fix code {
         display: block;
-        margin-bottom: 6px;
-        font: 11px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace;
-        color: #fcd34d;
+        margin-bottom: 8px;
+        font: 11px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace;
+        color: var(--ink);
         word-break: break-all;
       }
       .fix button {
         width: 100%;
-        padding: 5px 0;
-        font-size: 12px;
-        background: #3730a3;
+        padding: 7px 0;
+        font-size: 11px;
+        box-shadow: 2px 2px 0 var(--shadow);
       }
-      .fix button:hover { background: #4f46e5; }
     </style>
   </head>
   <body>
-    <h1>froede</h1>
-    <label for="port">Companion port</label>
-    <input id="port" type="number" min="1" max="65535" placeholder="4519" />
-    <label for="token">Token (printed by the companion)</label>
-    <input id="token" type="password" placeholder="paste token here" />
-    <div class="row">
-      <button id="save">Save</button>
-      <button id="test">Test connection</button>
+    <div class="brand">
+      <svg viewBox="0 0 500 500" role="img" aria-label="froede">
+        <path
+          fill="currentColor"
+          fill-rule="evenodd"
+          d="M 236 29 275 30 318 39 357 56 374 66 396 83 427 116 444 142 453 160 467 203 472 248 468 292 455 335 432 377 410 402 410 303 282 303 282 200 410 200 410 103 90 103 90 200 218 200 218 303 90 303 89 402 73 384 56 358 41 325 33 297 29 272 29 229 33 203 41 175 56 142 70 120 82 105 119 71 143 56 182 39 211 32 236 30 Z"
+        />
+      </svg>
+      <h1>froede</h1>
+      <span class="ver" id="version"></span>
     </div>
-    <button id="toggle">Toggle edit mode in this tab</button>
-    <div id="status" class="status info"></div>
+
+    <div class="field">
+      <label for="port">Companion port</label>
+      <input id="port" type="number" min="1" max="65535" placeholder="4519" />
+    </div>
+    <div class="field">
+      <label for="token">Pairing token</label>
+      <input id="token" type="password" placeholder="paste the token printed by npx froede" />
+    </div>
+
+    <div class="row">
+      <button id="test">Save and test</button>
+      <button id="toggle">Edit</button>
+    </div>
+
+    <div id="status" class="status"></div>
+
     <div id="fix" class="fix" hidden>
+      <p>Run this in your project</p>
       <code id="fix-cmd"></code>
       <button id="copy" type="button">Copy command</button>
     </div>
+
     <script src="./popup.js"></script>
   </body>
 </html>

@@ -26,13 +26,16 @@
   let guideH: HTMLElement | null = null;
 
   chrome.runtime.onMessage.addListener(
-    (message: FroedeToggleMessage, _sender, sendResponse) => {
+    (message: FroedeContentMessage, _sender, sendResponse) => {
       if (message.kind === "froede-toggle") {
         if (picking) {
           disable();
         } else {
           enable();
         }
+        sendResponse({ enabled: picking });
+      }
+      if (message.kind === "froede-state") {
         sendResponse({ enabled: picking });
       }
     },

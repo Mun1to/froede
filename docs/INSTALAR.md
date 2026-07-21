@@ -32,8 +32,8 @@ Imprime el puerto (4519) y un token. **El token cambia cada vez que reinicias el
 ## 4. Usar
 
 1. Abrir la página en `http://localhost:...`
-2. Popup de froede -> pegar puerto y token -> "Test connection" (debe mostrar la ruta del proyecto).
-3. "Toggle edit mode in this tab".
+2. Popup de froede -> pegar puerto y token -> "Save and test" (debe mostrar la ruta del proyecto en verde).
+3. "Edit" (el botón se pone verde y pasa a decir "Editing" mientras el modo está activo).
 4. **Clic** sobre cualquier elemento -> lo selecciona: aparecen tiradores en las esquinas (arrastrar para redimensionar; Shift+arrastre = solo un eje) y un panel con tamaño/color/tipografía/espaciado/atributos.
 5. **Doble clic** sobre un texto -> lo edita in-place -> Enter para guardar, Esc para cancelar.
 6. Todo cambio queda escrito en el archivo fuente real (en React lo verás vía HMR sin recargar; en HTML estático la pestaña se recarga sola).

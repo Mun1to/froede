@@ -64,7 +64,7 @@ Browser (Chrome/Edge)                     Your machine
    npx froede        # prints a port and a pairing token
    ```
 
-   Open your localhost page, paste the port + token into the extension popup, and hit "Toggle edit mode". Click to select, double-click to edit text - every change is saved to the real file, and your undo is `git diff`.
+   Open your localhost page, paste the port + token into the extension popup, hit "Save and test", then "Edit". Click to select, double-click to edit text - every change is saved to the real file, and Ctrl+Z undoes it without leaving the page.
 
    > Loaded unpacked? Chrome gives the extension a per-folder ID that the companion has to trust. Copy the ID shown under the extension in `chrome://extensions` and start the companion with it: `FROEDE_EXTENSION_ID=<that-id> npx froede` (PowerShell: `$env:FROEDE_EXTENSION_ID="<that-id>"; npx froede`). Once froede is installed from the Chrome Web Store this isn't needed - its ID is trusted by default.
 

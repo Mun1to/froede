@@ -324,7 +324,14 @@
         return true;
       }
 
-      if (message.kind === "froede-toggle-tab") {
+      if (
+        message.kind === "froede-toggle-tab" ||
+        message.kind === "froede-tab-state"
+      ) {
+        const forward: FroedeContentMessage =
+          message.kind === "froede-toggle-tab"
+            ? { kind: "froede-toggle" }
+            : { kind: "froede-state" };
         (async () => {
           const [tab] = await chrome.tabs.query({
             active: true,
@@ -335,9 +342,7 @@
             return;
           }
           try {
-            const result = await chrome.tabs.sendMessage(tab.id, {
-              kind: "froede-toggle",
-            } satisfies FroedeToggleMessage);
+            const result = await chrome.tabs.sendMessage(tab.id, forward);
             sendResponse({ ok: true, enabled: result?.enabled === true });
           } catch {
             sendResponse({

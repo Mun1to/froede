@@ -13,7 +13,7 @@ froede does not collect, transmit, sell, or share any user data. There is no ser
 The extension uses two permissions:
 
 - **`storage`** - to remember the companion's port number and pairing token you paste into the popup, so you don't have to re-enter them every time. This is stored with `chrome.storage.local`, on your own device only. It is never synced to a Google account, never sent to any server, and never leaves your browser.
-- **`activeTab`** - to know which tab to toggle edit mode on, and to send it the selection/edit messages you trigger by clicking. It only acts on the tab you are actively using, and only in response to your own action (opening the popup, clicking "Toggle edit mode").
+- **`activeTab`** - to know which tab to toggle edit mode on, and to send it the selection/edit messages you trigger by clicking. It only acts on the tab you are actively using, and only in response to your own action (opening the popup, clicking "Edit").
 
 The extension also opens a WebSocket connection to `127.0.0.1` (your own machine, never a remote host) to talk to the froede companion process you started yourself with `npx froede`. That connection carries the DOM selection and edit content needed to write your change into your source file - it never leaves your computer.
 

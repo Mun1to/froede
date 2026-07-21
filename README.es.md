@@ -52,7 +52,7 @@ froede edita archivos de tu ordenador, así que esto importa: todo corre **en lo
    npx froede        # imprime un puerto y un token de emparejamiento
    ```
 
-   Abre tu página en localhost, pega el puerto + token en el popup de la extensión, y activa "Toggle edit mode". Clic para seleccionar, doble clic para editar texto - cada cambio se guarda en el archivo real, y tu deshacer es `git diff`.
+   Abre tu página en localhost, pega el puerto + token en el popup de la extensión, pulsa "Save and test" y luego "Edit". Clic para seleccionar, doble clic para editar texto - cada cambio se guarda en el archivo real, y Ctrl+Z lo deshace sin salir de la página.
 
    > ¿La cargaste descomprimida? Chrome le da a la extensión un ID por carpeta que el companion necesita reconocer. Copia el ID que aparece bajo la extensión en `chrome://extensions` y arranca el companion con él: `FROEDE_EXTENSION_ID=<ese-id> npx froede` (PowerShell: `$env:FROEDE_EXTENSION_ID="<ese-id>"; npx froede`). Cuando instales froede desde la Chrome Web Store esto no hace falta - su ID se confía por defecto.
 
