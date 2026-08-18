@@ -12,3 +12,9 @@ desktop.ini
 /froede.ico
 .vscode/
 .idea/
+CLAUDE.md
+GEMINI.md
+.github/copilot-instructions.md
+.cursor/rules/contexto.mdc
+AGENTS.md
+.agents/
