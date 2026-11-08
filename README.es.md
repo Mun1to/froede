@@ -18,6 +18,15 @@ Un toolkit ligero para editar el código detrás de una web o app en ejecución 
 
 <p align="center"><img src="docs/screenshots/panel-select.png" alt="Al seleccionar un elemento aparecen tiradores de redimensión y un panel de propiedades"></p>
 
+## Cómo funciona
+
+<p align="center"><picture>
+<source media="(prefers-color-scheme: dark) and (max-width: 600px)" srcset=".github/readme/how-it-works-dark-narrow.es.svg">
+<source media="(max-width: 600px)" srcset=".github/readme/how-it-works-light-narrow.es.svg">
+<source media="(prefers-color-scheme: dark)" srcset=".github/readme/how-it-works-dark.es.svg">
+<img src=".github/readme/how-it-works-light.es.svg" alt="Consigue la extensión (una vez por navegador).: instálala desde la Chrome Web Store. Prepara tu proyecto.: Los HTML estáticos se saltan este paso - basta servir la carpeta en localhost. Si no, npx froede init (detecta tu vite.config, instala el plugin y lo cablea solo). Arranca el companion y emparéjalo.: npx froede imprime un puerto y un token de emparejamiento. Abre tu página en localhost, pega el puerto + token en el popup de la extensión, pulsa &quot;Save and test&quot; y luego &quot;Edit&quot;. Clic para seleccionar, doble clic para editar texto.: Cada cambio se guarda en el archivo real, y Ctrl+Z lo deshace sin salir de la página.">
+</picture></p>
+
 **Estado: publicado en la Chrome Web Store y en npm**. Texto, tamaño, color, tipografía, espaciado y atributos (alt, href, placeholder, src, title) editan de punta a punta en ambos targets (HTML estático y React + Vite), verificado contra archivos reales. También puedes **arrastrar elementos para moverlos** (con alineación a los elementos de alrededor, tipo Figma), **borrarlos** con Backspace y **deshacerlo todo con Ctrl+Z**. Las herramientas de layout completas y las animaciones siguen en el roadmap.
 
 ## Cómo funciona

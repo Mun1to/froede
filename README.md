@@ -18,6 +18,15 @@ A lightweight toolkit for editing the code behind a running web page or app by c
 
 <p align="center"><img src="docs/screenshots/panel-select.png" alt="Selecting an element shows resize handles and a property panel"></p>
 
+## How it works
+
+<p align="center"><picture>
+<source media="(prefers-color-scheme: dark) and (max-width: 600px)" srcset=".github/readme/how-it-works-dark-narrow.svg">
+<source media="(max-width: 600px)" srcset=".github/readme/how-it-works-light-narrow.svg">
+<source media="(prefers-color-scheme: dark)" srcset=".github/readme/how-it-works-dark.svg">
+<img src=".github/readme/how-it-works-light.svg" alt="Get the extension (once per browser).: install it from the Chrome Web Store. Wire up your project.: Static HTML projects skip this - just serve the folder on localhost. Otherwise run npx froede init (detects your Vite config, installs the plugin, wires it up). Start the companion and pair it.: Run npx froede (prints a port and a pairing token). Open your localhost page, paste the port + token into the extension popup, hit &quot;Save and test&quot;, then &quot;Edit&quot;. Click to select, double-click to edit text.: Every change is saved to the real file, and Ctrl+Z undoes it without leaving the page.">
+</picture></p>
+
 **Status: live on the Chrome Web Store and npm**. Text, size, color, typography, spacing and attributes (alt, href, placeholder, src, title) all edit end to end on both targets (static HTML and React + Vite), verified against real files. You can also **drag elements to move them** (snapping to nearby elements, Figma-style), **delete them** with Backspace, and **undo any of it with Ctrl+Z**. Full layout tools and animations are still on the roadmap.
 
 ## How it works
