@@ -1,39 +1,66 @@
-<p align="center">
-  <img src="docs/brand/froede_logo.png" width="130" alt="logo de froede">
-</p>
+<div align="center">
+
+<picture><source media="(prefers-color-scheme: dark)" srcset="docs/brand/froede_logooscuro.svg"><img src="docs/brand/froede_logoclaro.svg" alt="froede" height="88"></picture>
 
 # froede
 
-**front + edit + code.** Un toolkit ligero para editar el código detrás de una web o app en ejecución haciendo clic en lo que ves - sin bucear en el código fuente, sin necesitar un IDE completo.
+**Front + edit + code.**
 
-[![npm](https://img.shields.io/npm/v/froede)](https://www.npmjs.com/package/froede) [![license](https://img.shields.io/npm/l/froede)](LICENSE) [![Chrome Web Store](https://img.shields.io/chrome-web-store/v/clfpgnbnfgaabdoiadjfkhfhmnfemeba?logo=googlechrome&logoColor=white&label=Chrome%20Web%20Store)](https://chromewebstore.google.com/detail/froede/clfpgnbnfgaabdoiadjfkhfhmnfemeba)
+Un toolkit ligero para editar el código detrás de una web o app en ejecución haciendo clic en lo que ves - sin bucear en el código fuente, sin necesitar un IDE completo.
 
-> **Estado: publicado en la Chrome Web Store y en npm** (versiones actuales en los badges de arriba). Texto, tamaño, color, tipografía, espaciado y atributos (alt, href, placeholder, src, title) editan de punta a punta en ambos targets (HTML estático y React + Vite), verificado contra archivos reales. También puedes **arrastrar elementos para moverlos** (con alineación a los elementos de alrededor, tipo Figma), **borrarlos** con Backspace y **deshacerlo todo con Ctrl+Z**. Las herramientas de layout completas y las animaciones siguen en el roadmap.
+<a href="https://chromewebstore.google.com/detail/froede/clfpgnbnfgaabdoiadjfkhfhmnfemeba"><picture><source media="(prefers-color-scheme: dark)" srcset=".github/readme/download-chrome-dark.es.svg"><img src=".github/readme/download-chrome-light.es.svg" alt="Instálala desde la Chrome Web Store"></picture></a>
 
-![Al seleccionar un elemento aparecen tiradores de redimensión y un panel de propiedades](docs/screenshots/panel-select.png)
+[Licencia MIT](LICENSE) · [última versión](https://chromewebstore.google.com/detail/froede/clfpgnbnfgaabdoiadjfkhfhmnfemeba) · Chrome/Edge · sin cuenta · sin nube, sin telemetría, sin IA
 
-## La idea
+[npm](https://www.npmjs.com/package/froede) · [Última release](https://github.com/Mun1to/froede/releases/latest) · [Seguridad](SECURITY.es.md) · [Guía de instalación](docs/INSTALAR.md) · [Investigación](docs/INVESTIGACION.md) · [English](README.md)
 
-Señalas un elemento en una página o app en ejecución, lo cambias - texto, tamaño, color, tipografía, espaciado, atributos, su posición (arrastrar para mover) - o lo borras, y ese cambio llega al código fuente real. Sin sandbox. Sin un agente de IA como intermediario. Sin ser un cambio efímero en el DOM que desaparece al recargar. Tan simple e intuitivo como una extensión de devtools, no una app de diseño completa.
+</div>
 
-## En acción
+<p align="center"><img src="docs/screenshots/panel-select.png" alt="Al seleccionar un elemento aparecen tiradores de redimensión y un panel de propiedades"></p>
 
-| Antes | Editando texto | Seleccionado: estilo + atributos | Moviendo: guías de centrado |
-|---|---|---|---|
-| ![Una landing corriendo en localhost](docs/screenshots/hero.png) | ![Un título editándose en el sitio](docs/screenshots/text-edit.png) | ![Un botón seleccionado, con tiradores y panel de tamaño, colores, tipografía, espaciado y su atributo href](docs/screenshots/panel-select.png) | ![Un elemento arrastrándose, con una guía vertical que lo centra en su contenedor](docs/screenshots/move-guides.png) |
-
-Clic en cualquier elemento para seleccionarlo - aparecen tiradores en las esquinas (Shift+arrastre para trabar a un solo eje) y un panel con tamaño, color, tipografía, espaciado y los atributos editables del elemento. Arrástralo para moverlo - las guías lo alinean con los bordes y centros de los elementos de alrededor - y pulsa Backspace para borrarlo. Doble clic en un texto para editarlo en el sitio. Cada cambio se escribe directo en el archivo fuente real, y Ctrl+Z lo deshace.
-
-## ¿Es seguro?
-
-froede edita archivos de tu ordenador, así que esto importa: todo corre **en local** (sin nube, sin cuenta, sin telemetría, sin IA), la pieza que escribe archivos solo puede tocar la carpeta que tú le indicas, y cada parte está explicada en palabras normales en [SECURITY.es.md](SECURITY.es.md) - incluido lo que froede *nunca* puede hacer. Tu deshacer es Ctrl+Z, y `git diff` por detrás.
+**Estado: publicado en la Chrome Web Store y en npm**. Texto, tamaño, color, tipografía, espaciado y atributos (alt, href, placeholder, src, title) editan de punta a punta en ambos targets (HTML estático y React + Vite), verificado contra archivos reales. También puedes **arrastrar elementos para moverlos** (con alineación a los elementos de alrededor, tipo Figma), **borrarlos** con Backspace y **deshacerlo todo con Ctrl+Z**. Las herramientas de layout completas y las animaciones siguen en el roadmap.
 
 ## Cómo funciona
 
-- **HTML estático:** la extensión manda la ruta DOM del elemento; el companion la mapea sobre el archivo con parse5 (mismo algoritmo WHATWG que el navegador) y hace el splice del nodo de texto o del atributo `style="..."`.
-- **React + Vite:** un plugin de Vite mínimo (`vite-plugin-froede`, solo en dev) marca cada elemento con `data-froede-loc="src/App.tsx:4:6"`; el companion reparsea ese archivo y edita el texto JSX exacto o parchea el objeto `style={{}}`. El HMR de Vite muestra el cambio al instante.
-- **Los cambios de estilo son siempre inline y siempre scoped al elemento exacto** - nunca una regla de clase compartida, así que redimensionar una card nunca mueve a sus hermanas.
-- **Seguridad:** solo loopback, Origin fijado al ID de la propia extensión froede (ni una web ni otra extensión pueden conectarse), token compartido (comparación en tiempo constante), y el companion físicamente no puede escribir fuera de la carpeta del proyecto donde arrancó. Cada edición verifica el valor actual antes de escribir y aborta si no coincide.
+|  |  |
+|---|---|
+| **HTML estático** | la extensión manda la ruta DOM del elemento; el companion la mapea sobre el archivo con parse5 (mismo algoritmo WHATWG que el navegador) y hace el splice del nodo de texto o del atributo `style="..."`. |
+| **React + Vite** | un plugin de Vite mínimo (`vite-plugin-froede`, solo en dev) marca cada elemento con `data-froede-loc="src/App.tsx:4:6"`; el companion reparsea ese archivo y edita el texto JSX exacto o parchea el objeto `style={{}}`. El HMR de Vite muestra el cambio al instante. |
+| **Los cambios de estilo son siempre inline y siempre scoped al elemento exacto** | nunca una regla de clase compartida, así que redimensionar una card nunca mueve a sus hermanas. |
+| **Seguridad** | solo loopback, Origin fijado al ID de la propia extensión froede (ni una web ni otra extensión pueden conectarse), token compartido (comparación en tiempo constante), y el companion físicamente no puede escribir fuera de la carpeta del proyecto donde arrancó. Cada edición verifica el valor actual antes de escribir y aborta si no coincide. |
+
+## Capturas
+
+<table>
+<tr>
+<td width="50%" valign="top"><img src="docs/screenshots/hero.png" alt="Una landing corriendo en localhost"><br>Antes</td>
+<td width="50%" valign="top"><img src="docs/screenshots/text-edit.png" alt="Un título editándose en el sitio"><br>Editando texto</td>
+</tr>
+</table>
+
+<table>
+<tr>
+<td width="50%" valign="top"><img src="docs/screenshots/move-guides.png" alt="Un elemento arrastrándose, con una guía vertical que lo centra en su contenedor"><br>Moviendo: guías de centrado</td>
+<td width="50%"></td>
+</tr>
+</table>
+
+## Panorama (a mediados de 2026)
+
+Antes de empezar, investigamos si ya existía algo así:
+
+| Proyecto | Open source | Simple / ligero | Escribe en el código fuente real |
+|---|---|---|---|
+| [Onlook](https://github.com/onlook-dev/onlook) | Sí (Apache-2.0) | No - app completa, contenedor sandbox, solo Next.js + Tailwind | Sí |
+| [Stagewise](https://github.com/stagewise-io/stagewise) | Sí | Sí - barra de herramientas en el navegador | Indirecto - pasa por un agente de IA conectado |
+| [VisBug](https://github.com/GoogleChromeLabs/ProjectVisBug) | Sí (Apache-2.0) | Sí - extensión de navegador | No - solo DOM, efímero |
+| [GrapesJS](https://github.com/GrapesJS/grapesjs) | Sí (BSD-3-Clause) | No - es un SDK para construir editores, no una herramienta para el usuario final | No - basado en exportación |
+| [Plasmic](https://github.com/plasmicapp/plasmic) | Mixta (MIT núcleo / AGPL studio) | No - app Studio aparte | Basado en "Publish", no en vivo |
+| Chrome DevTools Workspaces | Nativo | Sí | Solo el panel Sources - los cambios de elemento/DOM no se guardan |
+
+Ninguno combina "simple de señalar y hacer clic" con "escribe de verdad en tu código fuente, sin sandbox, sin intermediario de IA". Ese es el hueco al que apunta froede.
+
+Detalle completo de la investigación en [`docs/INVESTIGACION.md`](docs/INVESTIGACION.md).
 
 ## Quickstart
 
@@ -60,6 +87,18 @@ froede edita archivos de tu ordenador, así que esto importa: todo corre **en lo
 
 Guía completa, con un prompt listo para pegarle a tu asistente de IA: [`docs/INSTALAR.md`](docs/INSTALAR.md).
 
+## La idea
+
+Señalas un elemento en una página o app en ejecución, lo cambias - texto, tamaño, color, tipografía, espaciado, atributos, su posición (arrastrar para mover) - o lo borras, y ese cambio llega al código fuente real. Sin sandbox. Sin un agente de IA como intermediario. Sin ser un cambio efímero en el DOM que desaparece al recargar. Tan simple e intuitivo como una extensión de devtools, no una app de diseño completa.
+
+## En acción
+
+Clic en cualquier elemento para seleccionarlo - aparecen tiradores en las esquinas (Shift+arrastre para trabar a un solo eje) y un panel con tamaño, color, tipografía, espaciado y los atributos editables del elemento. Arrástralo para moverlo - las guías lo alinean con los bordes y centros de los elementos de alrededor - y pulsa Backspace para borrarlo. Doble clic en un texto para editarlo en el sitio. Cada cambio se escribe directo en el archivo fuente real, y Ctrl+Z lo deshace.
+
+## ¿Es seguro?
+
+froede edita archivos de tu ordenador, así que esto importa: todo corre **en local** (sin nube, sin cuenta, sin telemetría, sin IA), la pieza que escribe archivos solo puede tocar la carpeta que tú le indicas, y cada parte está explicada en palabras normales en [SECURITY.es.md](SECURITY.es.md) - incluido lo que froede *nunca* puede hacer. Tu deshacer es Ctrl+Z, y `git diff` por detrás.
+
 v0.5 edita texto plano visible, tamaño/color/tipografía/espaciado inline, y un allowlist seguro de atributos (href/src rechazan URLs de tipo script), y añade lo básico de layout - arrastrar para mover (con alineación inteligente respecto a los elementos cercanos), redimensionar y borrar, todo con undo/redo real (Ctrl+Z). Editar una instancia de un elemento generado por `.map()` ahora avisa y permite aislar el cambio en vez de reescribir todas las instancias en silencio. Duplicar elementos y las animaciones siguen en el roadmap.
 
 ## Con Claude Code (o cualquier asistente de IA)
@@ -70,23 +109,14 @@ froede incluye un skill de [Claude Code](https://claude.com/claude-code) que lo 
 
 > Configura froede (github.com/Mun1to/froede) para editar mi página de localhost haciendo clic. Detecta si es HTML estático o React/Vite (corre `npx froede init` una vez si es Vite), arranca el companion con `npx froede`, dame el puerto y el token para el popup de la extensión, y guíame para editar: clic para seleccionar, doble clic para texto, arrastrar para mover, Backspace para borrar; deshacer con `git diff`.
 
-## Panorama (a mediados de 2026)
+## No te fíes, compruébalo
 
-Antes de empezar, investigamos si ya existía algo así:
-
-| Proyecto | Open source | Simple / ligero | Escribe en el código fuente real |
-|---|---|---|---|
-| [Onlook](https://github.com/onlook-dev/onlook) | Sí (Apache-2.0) | No - app completa, contenedor sandbox, solo Next.js + Tailwind | Sí |
-| [Stagewise](https://github.com/stagewise-io/stagewise) | Sí | Sí - barra de herramientas en el navegador | Indirecto - pasa por un agente de IA conectado |
-| [VisBug](https://github.com/GoogleChromeLabs/ProjectVisBug) | Sí (Apache-2.0) | Sí - extensión de navegador | No - solo DOM, efímero |
-| [GrapesJS](https://github.com/GrapesJS/grapesjs) | Sí (BSD-3-Clause) | No - es un SDK para construir editores, no una herramienta para el usuario final | No - basado en exportación |
-| [Plasmic](https://github.com/plasmicapp/plasmic) | Mixta (MIT núcleo / AGPL studio) | No - app Studio aparte | Basado en "Publish", no en vivo |
-| Chrome DevTools Workspaces | Nativo | Sí | Solo el panel Sources - los cambios de elemento/DOM no se guardan |
-
-Ninguno combina "simple de señalar y hacer clic" con "escribe de verdad en tu código fuente, sin sandbox, sin intermediario de IA". Ese es el hueco al que apunta froede.
-
-Detalle completo de la investigación en [`docs/INVESTIGACION.md`](docs/INVESTIGACION.md).
+No hace falta que te fíes. Abre [AI-AUDIT.md](AI-AUDIT.md), pega ese texto en tu IA y te dirá en tu idioma qué hace este programa de verdad: qué envía por internet, qué toca en tu ordenador y qué ejecuta al instalarse.
 
 ## Licencia
 
 MIT - ver [LICENSE](LICENSE).
+
+<br>
+
+<p align="center">Hecho por <a href="https://munito.dev"><b>Munir Torres</b></a>. También suyo: <a href="https://adeorq.com">Adeorq</a> · <a href="https://vocript.app">VoCript</a> · <a href="https://winshotx.com">winshotx</a> · <a href="https://github.com/Mun1to/Expoal">Expoal</a> · <a href="https://github.com/Mun1to/hotkeyconfig">hotkeyconfig</a></p>
